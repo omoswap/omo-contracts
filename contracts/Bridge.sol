@@ -26,7 +26,7 @@ contract Bridge is Attestable, Pausable, ReentrancyGuard {
     event BindBridge(uint32 destinationDomain, bytes targetBridge);
     event BindBridgeBatch(uint32[] destinationDomains, bytes[] targetBridges);
     event BridgeOut(address sender, uint32 destinationDomain, uint256 amount, uint64 nonce, bytes32 recipient, bytes callData, uint256 fee);
-    event BridgeIn(address recipient, uint256 amount);
+    event BridgeIn(address sender, address recipient, uint256 amount);
 
     struct TxArgs {
         bytes message;
@@ -89,7 +89,7 @@ contract Bridge is Attestable, Pausable, ReentrancyGuard {
             IERC20(USDC).safeTransfer(receiver, balance - balanceBefore);
         }
 
-        emit BridgeIn(receiver, amount);
+        emit BridgeIn(msg.sender, receiver, amount);
     }
 
     function executeExternalCall(bytes memory callData, address receiver, uint256 amount) internal {
