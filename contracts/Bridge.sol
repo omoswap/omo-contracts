@@ -20,8 +20,8 @@ contract Bridge is Attestable, Pausable, ReentrancyGuard {
     address public tokenMessenger;
     mapping(uint32 => bytes) public bridgeHashMap;
 
-    event SetTokenMessenger(address newTokenMessenger);
-    event SetUSDC(address newUSDCAddress);
+    event SetTokenMessenger(address tokenMessenger);
+    event SetUSDC(address USDC);
     event SetFeeCollector(address feeCollector);
     event BindBridge(uint32 destinationDomain, bytes targetBridge);
     event BindBridgeBatch(uint32[] destinationDomains, bytes[] targetBridges);
