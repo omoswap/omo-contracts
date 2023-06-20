@@ -30,7 +30,7 @@ contract Bridge is Attestable, Pausable, ReentrancyGuard {
 
     struct TxArgs {
         bytes message;
-        bytes attestation1;
+        bytes mintAttestation;
         bytes32 recipient;
         bytes callData;
     }
@@ -76,7 +76,7 @@ contract Bridge is Attestable, Pausable, ReentrancyGuard {
         TxArgs memory txArgs = deserializeTxArgs(args);
 
         uint256 balanceBefore = IERC20(USDC).balanceOf(address(this));
-        bool success = getReceiver().receiveMessage(txArgs.message, txArgs.attestation1);
+        bool success = getReceiver().receiveMessage(txArgs.message, txArgs.mintAttestation);
         require(success, "receive message failed");
         uint256 amount = IERC20(USDC).balanceOf(address(this)) - balanceBefore;
 
@@ -180,7 +180,7 @@ contract Bridge is Attestable, Pausable, ReentrancyGuard {
         TxArgs memory txArgs;
         uint256 offset = 0;
         (txArgs.message, offset) = Utils.NextVarBytes(rawArgs, offset);
-        (txArgs.attestation1, offset) = Utils.NextVarBytes(rawArgs, offset);
+        (txArgs.mintAttestation, offset) = Utils.NextVarBytes(rawArgs, offset);
 
         bytes memory recipientBytes;
         (recipientBytes, offset) = Utils.NextVarBytes(rawArgs, offset);
