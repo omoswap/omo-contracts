@@ -31,7 +31,7 @@ contract Bridge is Attestable, Pausable, ReentrancyGuard {
     struct TxArgs {
         bytes message;
         bytes attestation1;
-        bytes32 mintRecipient;
+        bytes32 recipient;
         bytes callData;
     }
 
@@ -51,7 +51,7 @@ contract Bridge is Attestable, Pausable, ReentrancyGuard {
     function bridgeOut(
         uint256 amount,
         uint32 destinationDomain,
-        bytes32 mintRecipient,
+        bytes32 recipient,
         bytes calldata callData
     ) external payable nonReentrant whenNotPaused {
         bytes memory targetBridge = bridgeHashMap[destinationDomain];
@@ -62,7 +62,7 @@ contract Bridge is Attestable, Pausable, ReentrancyGuard {
         );
 
         sendNative(feeCollector, msg.value);
-        emit BridgeOut(msg.sender, destinationDomain, amount, nonce, mintRecipient, callData, msg.value);
+        emit BridgeOut(msg.sender, destinationDomain, amount, nonce, recipient, callData, msg.value);
     }
 
     function bridgeIn(
@@ -80,16 +80,16 @@ contract Bridge is Attestable, Pausable, ReentrancyGuard {
         require(success, "receive message failed");
         uint256 amount = IERC20(USDC).balanceOf(address(this)) - balanceBefore;
 
-        address receiver = bytes32ToAddress(txArgs.mintRecipient);
+        address recipient = bytes32ToAddress(txArgs.recipient);
 
-        executeExternalCall(txArgs.callData, receiver, amount);
+        executeExternalCall(txArgs.callData, recipient, amount);
 
         uint256 balance = IERC20(USDC).balanceOf(address(this));
         if (balance > balanceBefore) {
-            IERC20(USDC).safeTransfer(receiver, balance - balanceBefore);
+            IERC20(USDC).safeTransfer(recipient, balance - balanceBefore);
         }
 
-        emit BridgeIn(msg.sender, receiver, amount);
+        emit BridgeIn(msg.sender, recipient, amount);
     }
 
     function executeExternalCall(bytes memory callData, address receiver, uint256 amount) internal {
@@ -182,9 +182,9 @@ contract Bridge is Attestable, Pausable, ReentrancyGuard {
         (txArgs.message, offset) = Utils.NextVarBytes(rawArgs, offset);
         (txArgs.attestation1, offset) = Utils.NextVarBytes(rawArgs, offset);
 
-        bytes memory mintRecipient;
-        (mintRecipient, offset) = Utils.NextVarBytes(rawArgs, offset);
-        txArgs.mintRecipient = addressToBytes32(Utils.bytesToAddress(mintRecipient));
+        bytes memory recipientBytes;
+        (recipientBytes, offset) = Utils.NextVarBytes(rawArgs, offset);
+        txArgs.recipient = addressToBytes32(Utils.bytesToAddress(recipientBytes));
 
         (txArgs.callData, offset) = Utils.NextVarBytes(rawArgs, offset);
 
