@@ -57,6 +57,8 @@ contract Bridge is Attestable, Pausable, ReentrancyGuard {
         bytes memory targetBridge = bridgeHashMap[destinationDomain];
         require(targetBridge.length > 0, "target bridnge not enabled");
 
+        IERC20(USDC).safeTransferFrom(msg.sender, address(this), amount);
+
         uint64 nonce = ITokenMessenger(tokenMessenger).depositForBurnWithCaller(
             amount, destinationDomain, bytes32(targetBridge), USDC, bytes32(targetBridge)
         );
@@ -76,7 +78,7 @@ contract Bridge is Attestable, Pausable, ReentrancyGuard {
         TxArgs memory txArgs = deserializeTxArgs(args);
 
         uint256 balanceBefore = IERC20(USDC).balanceOf(address(this));
-        bool success = getReceiver().receiveMessage(txArgs.message, txArgs.mintAttestation);
+        bool success = _getMessageTransmitter().receiveMessage(txArgs.message, txArgs.mintAttestation);
         require(success, "receive message failed");
         uint256 amount = IERC20(USDC).balanceOf(address(this)) - balanceBefore;
 
@@ -108,7 +110,11 @@ contract Bridge is Attestable, Pausable, ReentrancyGuard {
         } catch {}
     }
 
-    function getReceiver() internal view returns (IReceiver) {
+    function getMessageTransmitter() external view returns (IReceiver) {
+        return _getMessageTransmitter();
+    }
+
+    function _getMessageTransmitter() internal view returns (IReceiver) {
         return IReceiver(ITokenMessenger(tokenMessenger).localMessageTransmitter());
     }
 
