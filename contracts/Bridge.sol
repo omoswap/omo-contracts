@@ -210,6 +210,11 @@ contract Bridge is Attestable, Pausable, ReentrancyGuard {
         (data, offset) = Utils.NextVarBytes(callData, offset);
     }
 
+    // May revert if current chain does not implement the `BASEFEE` opcode
+    function getBasefee() external view returns (uint256 basefee) {
+        basefee = block.basefee;
+    }
+
     function addressToBytes32(address addr) internal pure returns (bytes32) {
         return bytes32(uint256(uint160(addr)));
     }
