@@ -40,12 +40,16 @@ contract Bridge is Attestable, Pausable, ReentrancyGuard {
     constructor(
         address _tokenMessenger,
         address _attester,
-        address _feeCollector
+        address _feeCollector,
+        address _usdc
         ) Attestable(_attester) {
         require(_tokenMessenger != address(0), "tokenMessenger address cannot be zero");
         require(_feeCollector != address(0), "feeCollector address cannot be zero");
+        require(_usdc != address(0), "USDC address cannot be zero");
 
         tokenMessenger = _tokenMessenger;
+        feeCollector = _feeCollector;
+        USDC = _usdc;
     }
 
     function bridgeOut(
@@ -58,7 +62,7 @@ contract Bridge is Attestable, Pausable, ReentrancyGuard {
         require(targetBridge.length > 0, "target bridnge not enabled");
 
         IERC20(USDC).safeTransferFrom(msg.sender, address(this), amount);
-
+        IERC20(USDC).safeApprove(tokenMessenger, amount);
         uint64 nonce = ITokenMessenger(tokenMessenger).depositForBurnWithCaller(
             amount, destinationDomain, bytes32(targetBridge), USDC, bytes32(targetBridge)
         );
