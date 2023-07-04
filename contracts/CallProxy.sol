@@ -71,4 +71,18 @@ contract CallProxy is Ownable2Step {
 
         (data, offset) = Utils.NextVarBytes(callData, offset);
     }
+
+    function encodeCallDataForExternalCall(
+        address callee,
+        bytes calldata callData
+    ) external pure returns (bytes memory) {
+        bytes memory buff;
+
+        buff = abi.encodePacked(
+            Utils.WriteVarBytes(abi.encodePacked(callee)),
+            Utils.WriteVarBytes(callData)
+        );
+
+        return buff;
+    }
 }
