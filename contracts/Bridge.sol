@@ -3,9 +3,9 @@
 pragma solidity 0.8.17;
 
 import "./Utils.sol";
-import "./access/Ownable.sol";
 import "./roles/Attestable.sol";
 import "./interfaces/IReceiver.sol";
+import "./interfaces/ICallProxy.sol";
 import "./interfaces/ITokenMessenger.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -18,11 +18,14 @@ contract Bridge is Attestable, Pausable, ReentrancyGuard {
     address public USDC;
     address public feeCollector;
     address public tokenMessenger;
+    address public callProxy;
+
     mapping(uint32 => bytes32) public bridgeHashMap;
 
     event SetTokenMessenger(address tokenMessenger);
     event SetUSDC(address USDC);
     event SetFeeCollector(address feeCollector);
+    event SetCallProxy(address callProxy);
     event BindBridge(uint32 destinationDomain, bytes32 targetBridge);
     event BindBridgeBatch(uint32[] destinationDomains, bytes32[] targetBridges);
     event BridgeOut(address sender, uint32 destinationDomain, uint256 amount, uint64 nonce, bytes32 recipient, bytes callData, uint256 fee);
@@ -88,7 +91,10 @@ contract Bridge is Attestable, Pausable, ReentrancyGuard {
 
         address recipient = bytes32ToAddress(txArgs.recipient);
 
-        executeExternalCall(txArgs.callData, recipient, amount);
+        if (txArgs.callData.length != 0 && callProxy != address(0)) {
+            IERC20(USDC).safeTransfer(callProxy, amount);
+            require(ICallProxy(callProxy).proxyCall(USDC, amount, recipient, txArgs.callData), "proxy call failed");
+        }
 
         uint256 balance = IERC20(USDC).balanceOf(address(this));
         if (balance > balanceBefore) {
@@ -96,22 +102,6 @@ contract Bridge is Attestable, Pausable, ReentrancyGuard {
         }
 
         emit BridgeIn(msg.sender, recipient, amount);
-    }
-
-    function executeExternalCall(bytes memory callData, address receiver, uint256 amount) internal {
-        if (callData.length == 0) {
-            IERC20(USDC).safeTransfer(receiver, amount);
-            return;
-        }
-
-        try this.decodeCallDataForExternalCall(callData) returns (address callee, bytes memory data) {
-            IERC20(USDC).safeApprove(callee, 0);
-            IERC20(USDC).safeApprove(callee, amount);
-
-            require(callee != address(this), "invalid callee");
-
-            callee.call(data);
-        } catch {}
     }
 
     function getMessageTransmitter() external view returns (IReceiver) {
@@ -133,6 +123,11 @@ contract Bridge is Attestable, Pausable, ReentrancyGuard {
         require(newUSDCAddress != address(0), "USDC address cannot be zero");
         USDC = newUSDCAddress;
         emit SetUSDC(newUSDCAddress);
+    }
+
+    function setCallProxy(address newCallProxy) onlyOwner external {
+        callProxy = newCallProxy;
+        emit SetCallProxy(newCallProxy);
     }
 
     function setFeeCollector(address newFeeCollector) external onlyOwner {
@@ -199,19 +194,6 @@ contract Bridge is Attestable, Pausable, ReentrancyGuard {
         (txArgs.callData, offset) = Utils.NextVarBytes(rawArgs, offset);
 
         return txArgs;
-    }
-
-    function decodeCallDataForExternalCall(bytes memory callData) external pure returns (
-        address callee,
-        bytes memory data
-    ) {
-        uint256 offset = 0;
-
-        bytes memory calleeAddressBytes;
-        (calleeAddressBytes, offset) = Utils.NextVarBytes(callData, offset);
-        callee = Utils.bytesToAddress(calleeAddressBytes);
-
-        (data, offset) = Utils.NextVarBytes(callData, offset);
     }
 
     // May revert if current chain does not implement the `BASEFEE` opcode
