@@ -18,13 +18,13 @@ contract Bridge is Attestable, Pausable, ReentrancyGuard {
     address public USDC;
     address public feeCollector;
     address public tokenMessenger;
-    mapping(uint32 => bytes) public bridgeHashMap;
+    mapping(uint32 => bytes32) public bridgeHashMap;
 
     event SetTokenMessenger(address tokenMessenger);
     event SetUSDC(address USDC);
     event SetFeeCollector(address feeCollector);
-    event BindBridge(uint32 destinationDomain, bytes targetBridge);
-    event BindBridgeBatch(uint32[] destinationDomains, bytes[] targetBridges);
+    event BindBridge(uint32 destinationDomain, bytes32 targetBridge);
+    event BindBridgeBatch(uint32[] destinationDomains, bytes32[] targetBridges);
     event BridgeOut(address sender, uint32 destinationDomain, uint256 amount, uint64 nonce, bytes32 recipient, bytes callData, uint256 fee);
     event BridgeIn(address sender, address recipient, uint256 amount);
 
@@ -58,13 +58,13 @@ contract Bridge is Attestable, Pausable, ReentrancyGuard {
         bytes32 recipient,
         bytes calldata callData
     ) external payable nonReentrant whenNotPaused {
-        bytes memory targetBridge = bridgeHashMap[destinationDomain];
-        require(targetBridge.length > 0, "target bridnge not enabled");
+        bytes32 targetBridge = bridgeHashMap[destinationDomain];
+        require(targetBridge != bytes32(0), "target bridnge not enabled");
 
         IERC20(USDC).safeTransferFrom(msg.sender, address(this), amount);
         IERC20(USDC).safeApprove(tokenMessenger, amount);
         uint64 nonce = ITokenMessenger(tokenMessenger).depositForBurnWithCaller(
-            amount, destinationDomain, bytes32(targetBridge), USDC, bytes32(targetBridge)
+            amount, destinationDomain, targetBridge, USDC, targetBridge
         );
 
         sendNative(feeCollector, msg.value);
@@ -142,13 +142,13 @@ contract Bridge is Attestable, Pausable, ReentrancyGuard {
         emit SetFeeCollector(newFeeCollector);
     }
 
-    function bindBridge(uint32 destinationDomain, bytes calldata targetBridge) onlyOwner external returns (bool) {
+    function bindBridge(uint32 destinationDomain, bytes32 targetBridge) onlyOwner external returns (bool) {
         bridgeHashMap[destinationDomain] = targetBridge;
         emit BindBridge(destinationDomain, targetBridge);
         return true;
     }
 
-    function bindBridgeBatch(uint32[] calldata destinationDomains, bytes[] calldata targetBridgeHashes) onlyOwner external returns (bool) {
+    function bindBridgeBatch(uint32[] calldata destinationDomains, bytes32[] calldata targetBridgeHashes) onlyOwner external returns (bool) {
         require(destinationDomains.length == targetBridgeHashes.length, "Inconsistent parameter lengths");
 
         for (uint i = 0; i < destinationDomains.length; i++) {
