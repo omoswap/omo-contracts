@@ -29,9 +29,6 @@ contract CallProxy is Ownable2Step {
             IERC20(token).safeApprove(callee, 0);
             IERC20(token).safeApprove(callee, amount);
 
-            require(callee != bridge, "invalid callee");
-            require(callee != address(this), "invalid callee");
-
             callee.call(data);
         } catch {}
 
