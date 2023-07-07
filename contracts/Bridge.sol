@@ -64,6 +64,7 @@ contract Bridge is Attestable, Pausable, ReentrancyGuard {
         bytes32 targetBridge = bridgeHashMap[destinationDomain];
         require(targetBridge != bytes32(0), "target bridge not enabled");
         require(msg.sender != callProxy, "forbidden");
+        require(recipient != bytes32(0), "recipient address cannot be zero");
 
         IERC20(USDC).safeTransferFrom(msg.sender, address(this), amount);
         IERC20(USDC).safeApprove(tokenMessenger, amount);
@@ -92,6 +93,7 @@ contract Bridge is Attestable, Pausable, ReentrancyGuard {
         require(amount > 0, "amount cannot be zero");
 
         address recipient = bytes32ToAddress(txArgs.recipient);
+        require(recipient != address(0), "recipient address cannot be zero");
 
         if (txArgs.callData.length != 0 && callProxy != address(0)) {
             IERC20(USDC).safeTransfer(callProxy, amount);
