@@ -62,7 +62,7 @@ contract Bridge is Attestable, Pausable, ReentrancyGuard {
         bytes calldata callData
     ) external payable nonReentrant whenNotPaused {
         bytes32 targetBridge = bridgeHashMap[destinationDomain];
-        require(targetBridge != bytes32(0), "target bridnge not enabled");
+        require(targetBridge != bytes32(0), "target bridge not enabled");
 
         IERC20(USDC).safeTransferFrom(msg.sender, address(this), amount);
         IERC20(USDC).safeApprove(tokenMessenger, amount);
