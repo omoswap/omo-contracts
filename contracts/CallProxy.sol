@@ -54,11 +54,6 @@ contract CallProxy is Ownable2Step {
         token.safeTransfer(_msgSender(), token.balanceOf(address(this)));
     }
 
-    function rescueNative(address receiver) external onlyOwner {
-        (bool success, ) = receiver.call{ value: address(this).balance }("");
-        require(success, "unable to send value, recipient may have reverted");
-    }
-
     function decodeCallDataForExternalCall(bytes memory callData) external pure returns (
         address callee,
         bytes memory data
