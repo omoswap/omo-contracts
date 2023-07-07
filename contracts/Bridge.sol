@@ -95,14 +95,11 @@ contract Bridge is Attestable, Pausable, ReentrancyGuard {
         address recipient = bytes32ToAddress(txArgs.recipient);
         require(recipient != address(0), "recipient address cannot be zero");
 
-        if (txArgs.callData.length != 0 && callProxy != address(0)) {
+        if (txArgs.callData.length == 0 || callProxy == address(0)) {
+            IERC20(USDC).safeTransfer(recipient, amount);
+        } else {
             IERC20(USDC).safeTransfer(callProxy, amount);
             require(ICallProxy(callProxy).proxyCall(USDC, amount, recipient, txArgs.callData), "proxy call failed");
-        }
-
-        uint256 balance = IERC20(USDC).balanceOf(address(this));
-        if (balance > balanceBefore) {
-            IERC20(USDC).safeTransfer(recipient, balance - balanceBefore);
         }
 
         emit BridgeIn(msg.sender, recipient, amount);
