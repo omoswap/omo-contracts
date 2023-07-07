@@ -89,6 +89,7 @@ contract Bridge is Attestable, Pausable, ReentrancyGuard {
         bool success = _getMessageTransmitter().receiveMessage(txArgs.message, txArgs.mintAttestation);
         require(success, "receive message failed");
         uint256 amount = IERC20(USDC).balanceOf(address(this)) - balanceBefore;
+        require(amount > 0, "amount cannot be zero");
 
         address recipient = bytes32ToAddress(txArgs.recipient);
 
