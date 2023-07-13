@@ -26,7 +26,7 @@ contract OMOEthereumUniswapAggregator is Ownable {
 
     address public WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address public factory = 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f;
-    address public Bridge = 0x0000000000000000000000000000000000000000;
+    address public bridge = 0x0000000000000000000000000000000000000000;
     address public feeCollector;
 
     uint256 public aggregatorFee = 3 * 10 ** 7;
@@ -44,7 +44,7 @@ contract OMOEthereumUniswapAggregator is Ownable {
         uint256 amountIn, address[] calldata path, address to, uint amountOutMin, bool unwrapETH
     ) external {
         if (amountIn == 0) {
-            require(msg.sender == IBridge(Bridge).callProxy(), "invalid caller");
+            require(msg.sender == IBridge(bridge).callProxy(), "invalid caller");
             amountIn = IERC20(path[0]).allowance(msg.sender, address(this));
         }
         require(amountIn != 0, 'OMOAggregator: ZERO_AMOUNT_IN');
@@ -78,9 +78,9 @@ contract OMOEthereumUniswapAggregator is Ownable {
 
         uint bridgeAmount = amountOut - feeAmount;
 
-        IERC20(path[path.length-1]).safeApprove(Bridge, bridgeAmount);
+        IERC20(path[path.length-1]).safeApprove(bridge, bridgeAmount);
 
-        IBridge(Bridge).bridgeOut{value: msg.value}(
+        IBridge(bridge).bridgeOut{value: msg.value}(
             bridgeAmount, destinationDomain, addressToBytes32(to), callData
         );
     }
@@ -123,9 +123,9 @@ contract OMOEthereumUniswapAggregator is Ownable {
 
         uint bridgeAmount = amountOut - feeAmount;
 
-        IERC20(path[path.length-1]).safeApprove(Bridge, bridgeAmount);
+        IERC20(path[path.length-1]).safeApprove(bridge, bridgeAmount);
 
-        IBridge(Bridge).bridgeOut{value: netFee}(
+        IBridge(bridge).bridgeOut{value: netFee}(
             bridgeAmount, destinationDomain, addressToBytes32(to), callData
         );
     }
@@ -187,7 +187,7 @@ contract OMOEthereumUniswapAggregator is Ownable {
 
     function setBridge(address _bridge) external onlyOwner {
         require(_bridge != address(0), "bridge address cannot be zero");
-        Bridge = _bridge;
+        bridge = _bridge;
     }
 
     function setFeeCollector(address _feeCollector) external onlyOwner {
