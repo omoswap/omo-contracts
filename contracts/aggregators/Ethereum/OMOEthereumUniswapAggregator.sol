@@ -73,15 +73,16 @@ contract OMOEthereumUniswapAggregator is Ownable {
     ) external payable {
         uint amountOut = _swapExactTokensForTokensSupportingFeeOnTransferTokens(amountIn, amountOutMin, path);
         uint feeAmount = amountOut * aggregatorFee / FEE_DENOMINATOR;
-        IERC20(path[path.length-1]).safeTransfer(feeCollector, feeAmount);
-        emit LOG_AGG_SWAP(msg.sender, amountIn, path[0], amountOut, path[path.length-1], to, feeAmount);
+        address bridgeToken = path[path.length-1];
+        IERC20(bridgeToken).safeTransfer(feeCollector, feeAmount);
+        emit LOG_AGG_SWAP(msg.sender, amountIn, path[0], amountOut, bridgeToken, to, feeAmount);
 
         uint bridgeAmount = amountOut - feeAmount;
 
-        IERC20(path[path.length-1]).safeApprove(bridge, bridgeAmount);
+        IERC20(bridgeToken).safeApprove(bridge, bridgeAmount);
 
         IBridge(bridge).bridgeOut{value: msg.value}(
-            bridgeAmount, destinationDomain, addressToBytes32(to), callData
+            bridgeToken, bridgeAmount, destinationDomain, addressToBytes32(to), callData
         );
     }
 
@@ -118,15 +119,16 @@ contract OMOEthereumUniswapAggregator is Ownable {
     ) external payable {
         uint amountOut = _swapExactETHForTokensSupportingFeeOnTransferTokens(amountOutMin, path, netFee);
         uint feeAmount = amountOut * aggregatorFee / FEE_DENOMINATOR;
-        IERC20(path[path.length-1]).safeTransfer(feeCollector, feeAmount);
-        emit LOG_AGG_SWAP(msg.sender, msg.value, address(0), amountOut, path[path.length-1], to, feeAmount);
+        address bridgeToken = path[path.length-1];
+        IERC20(bridgeToken).safeTransfer(feeCollector, feeAmount);
+        emit LOG_AGG_SWAP(msg.sender, msg.value, address(0), amountOut, bridgeToken, to, feeAmount);
 
         uint bridgeAmount = amountOut - feeAmount;
 
-        IERC20(path[path.length-1]).safeApprove(bridge, bridgeAmount);
+        IERC20(bridgeToken).safeApprove(bridge, bridgeAmount);
 
         IBridge(bridge).bridgeOut{value: netFee}(
-            bridgeAmount, destinationDomain, addressToBytes32(to), callData
+            bridgeToken, bridgeAmount, destinationDomain, addressToBytes32(to), callData
         );
     }
 

@@ -4,6 +4,7 @@ pragma solidity 0.8.17;
 
 import "./Utils.sol";
 import "./roles/Attestable.sol";
+import "./interfaces/IBridge.sol";
 import "./interfaces/IReceiver.sol";
 import "./interfaces/ICallProxy.sol";
 import "./interfaces/ITokenMessenger.sol";
@@ -12,26 +13,50 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-contract Bridge is Attestable, Pausable, ReentrancyGuard {
+contract Bridge is IBridge, Attestable, Pausable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
-    address public USDC;
     address public feeCollector;
     address public tokenMessenger;
     address public callProxy;
 
+    // destination domain => destination bridge
     mapping(uint32 => bytes32) public bridgeHashMap;
+    // token => disabled
+    mapping(address => bool) public disabledBridgeTokens;
+    // token, destination domain => disabled
+    mapping(address => mapping(uint32 => bool)) disabledRoutes;
 
     event SetTokenMessenger(address tokenMessenger);
-    event SetUSDC(address USDC);
     event SetFeeCollector(address feeCollector);
     event SetCallProxy(address callProxy);
+    event EnableBridgeToken(address token);
+    event DisableBridgeToken(address token);
+    event EnableRoute(address token, uint32 destinationDomain);
+    event DisableRoute(address token, uint32 destinationDomain);
     event BindBridge(uint32 destinationDomain, bytes32 targetBridge);
     event BindBridgeBatch(uint32[] destinationDomains, bytes32[] targetBridges);
-    event BridgeOut(address sender, uint32 destinationDomain, uint256 amount, uint64 nonce, bytes32 recipient, bytes callData, uint256 fee);
-    event BridgeIn(address sender, address recipient, uint256 amount);
+
+    event BridgeOut(
+        address sender,
+        address token,
+        uint32 destinationDomain,
+        uint256 amount,
+        uint64 nonce,
+        bytes32 recipient,
+        bytes callData,
+        uint256 fee
+    );
+
+    event BridgeIn(
+        address sender,
+        address recipient,
+        address token,
+        uint256 amount
+    );
 
     struct TxArgs {
+        address token;
         bytes message;
         bytes mintAttestation;
         bytes32 recipient;
@@ -43,37 +68,38 @@ contract Bridge is Attestable, Pausable, ReentrancyGuard {
     constructor(
         address _tokenMessenger,
         address _attester,
-        address _feeCollector,
-        address _usdc
+        address _feeCollector
         ) Attestable(_attester) {
         require(_tokenMessenger != address(0), "tokenMessenger address cannot be zero");
         require(_feeCollector != address(0), "feeCollector address cannot be zero");
-        require(_usdc != address(0), "USDC address cannot be zero");
 
         tokenMessenger = _tokenMessenger;
         feeCollector = _feeCollector;
-        USDC = _usdc;
     }
 
     function bridgeOut(
+        address token,
         uint256 amount,
         uint32 destinationDomain,
         bytes32 recipient,
         bytes calldata callData
     ) external payable nonReentrant whenNotPaused {
         bytes32 targetBridge = bridgeHashMap[destinationDomain];
+
         require(targetBridge != bytes32(0), "target bridge not enabled");
         require(msg.sender != callProxy, "forbidden");
         require(recipient != bytes32(0), "recipient address cannot be zero");
+        require(!disabledBridgeTokens[token], "token not enabled");
+        require(!disabledRoutes[token][destinationDomain], "route disabled");
 
-        IERC20(USDC).safeTransferFrom(msg.sender, address(this), amount);
-        IERC20(USDC).safeApprove(tokenMessenger, amount);
+        IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
+        IERC20(token).safeApprove(tokenMessenger, amount);
         uint64 nonce = ITokenMessenger(tokenMessenger).depositForBurnWithCaller(
-            amount, destinationDomain, targetBridge, USDC, targetBridge
+            amount, destinationDomain, targetBridge, token, targetBridge
         );
 
         sendNative(feeCollector, msg.value);
-        emit BridgeOut(msg.sender, destinationDomain, amount, nonce, recipient, callData, msg.value);
+        emit BridgeOut(msg.sender, token, destinationDomain, amount, nonce, recipient, callData, msg.value);
     }
 
     function bridgeIn(
@@ -85,24 +111,25 @@ contract Bridge is Attestable, Pausable, ReentrancyGuard {
         _verifyAttestationSignatures(args, attestation);
 
         TxArgs memory txArgs = deserializeTxArgs(args);
+        address token = txArgs.token;
 
-        uint256 balanceBefore = IERC20(USDC).balanceOf(address(this));
+        uint256 balanceBefore = IERC20(token).balanceOf(address(this));
         bool success = _getMessageTransmitter().receiveMessage(txArgs.message, txArgs.mintAttestation);
         require(success, "receive message failed");
-        uint256 amount = IERC20(USDC).balanceOf(address(this)) - balanceBefore;
+        uint256 amount = IERC20(token).balanceOf(address(this)) - balanceBefore;
         require(amount > 0, "amount cannot be zero");
 
         address recipient = bytes32ToAddress(txArgs.recipient);
         require(recipient != address(0), "recipient address cannot be zero");
 
         if (txArgs.callData.length == 0 || callProxy == address(0)) {
-            IERC20(USDC).safeTransfer(recipient, amount);
+            IERC20(token).safeTransfer(recipient, amount);
         } else {
-            IERC20(USDC).safeTransfer(callProxy, amount);
-            require(ICallProxy(callProxy).proxyCall(USDC, amount, recipient, txArgs.callData), "proxy call failed");
+            IERC20(token).safeTransfer(callProxy, amount);
+            require(ICallProxy(callProxy).proxyCall(token, amount, recipient, txArgs.callData), "proxy call failed");
         }
 
-        emit BridgeIn(msg.sender, recipient, amount);
+        emit BridgeIn(msg.sender, recipient, token, amount);
     }
 
     function getMessageTransmitter() external view returns (IReceiver) {
@@ -120,10 +147,28 @@ contract Bridge is Attestable, Pausable, ReentrancyGuard {
         emit SetTokenMessenger(newTokenMessenger);
     }
 
-    function setUSDC(address newUSDCAddress) onlyOwner external {
-        require(newUSDCAddress != address(0), "USDC address cannot be zero");
-        USDC = newUSDCAddress;
-        emit SetUSDC(newUSDCAddress);
+    function enableBridgeToken(address token) external onlyOwner {
+        require(token != address(0), "token address cannot be zero");
+        delete disabledBridgeTokens[token];
+        emit EnableBridgeToken(token);
+    }
+
+    function disableBridgeToken(address token) external onlyOwner {
+        require(token != address(0), "token address cannot be zero");
+        disabledBridgeTokens[token] = true;
+        emit DisableBridgeToken(token);
+    }
+
+    function enableRouter(address token, uint32 destinationDomain) external onlyOwner {
+        require(token != address(0), "token address cannot be zero");
+        delete disabledRoutes[token][destinationDomain];
+        emit EnableRoute(token, destinationDomain);
+    }
+
+    function disableRoute(address token, uint32 destinationDomain) external onlyOwner {
+        require(token != address(0), "token address cannot be zero");
+        disabledRoutes[token][destinationDomain] = true;
+        emit DisableRoute(token, destinationDomain);
     }
 
     function setCallProxy(address newCallProxy) onlyOwner external {
@@ -185,6 +230,11 @@ contract Bridge is Attestable, Pausable, ReentrancyGuard {
     function deserializeTxArgs(bytes calldata rawArgs) internal pure returns (TxArgs memory) {
         TxArgs memory txArgs;
         uint256 offset = 0;
+
+        bytes memory tokenBytes;
+        (tokenBytes, offset) = Utils.NextVarBytes(rawArgs, offset);
+        txArgs.token = Utils.bytesToAddress(tokenBytes);
+
         (txArgs.message, offset) = Utils.NextVarBytes(rawArgs, offset);
         (txArgs.mintAttestation, offset) = Utils.NextVarBytes(rawArgs, offset);
 
