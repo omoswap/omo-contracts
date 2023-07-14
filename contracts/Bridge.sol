@@ -22,10 +22,12 @@ contract Bridge is IBridge, Attestable, Pausable, ReentrancyGuard {
 
     // destination domain => destination bridge
     mapping(uint32 => bytes32) public bridgeHashMap;
+
     // token => disabled
     mapping(address => bool) public disabledBridgeTokens;
+
     // token, destination domain => disabled
-    mapping(address => mapping(uint32 => bool)) disabledRoutes;
+    mapping(address => mapping(uint32 => bool)) public disabledRoutes;
 
     event SetTokenMessenger(address tokenMessenger);
     event SetFeeCollector(address feeCollector);
