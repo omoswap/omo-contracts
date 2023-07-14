@@ -23,31 +23,25 @@ describe("bridge", () => {
             bridgeFactroy = await ethers.getContractFactory("Bridge");
         });
         it("should revert depoly if tokenMessanger is zero", async () => {
-            await expect(
-                bridgeFactroy.deploy(zeroAddress, owner.address, owner.address, usdcToken.address)
-            ).to.be.revertedWith("tokenMessenger address cannot be zero");
+            await expect(bridgeFactroy.deploy(zeroAddress, owner.address, owner.address)).to.be.revertedWith(
+                "tokenMessenger address cannot be zero"
+            );
         });
         it("should revert depoly if attester is zero", async () => {
-            await expect(
-                bridgeFactroy.deploy(owner.address, zeroAddress, owner.address, usdcToken.address)
-            ).to.be.revertedWith("New attester must be nonzero");
+            await expect(bridgeFactroy.deploy(owner.address, zeroAddress, owner.address)).to.be.revertedWith(
+                "New attester must be nonzero"
+            );
         });
         it("should revert depoly if feeCollector is zero", async () => {
-            await expect(
-                bridgeFactroy.deploy(owner.address, owner.address, zeroAddress, usdcToken.address)
-            ).to.be.revertedWith("feeCollector address cannot be zero");
-        });
-        it("should revert depoly if tokenMessanger is zero", async () => {
-            await expect(bridgeFactroy.deploy(owner.address, owner.address, owner.address, zeroAddress)).to.be.revertedWith(
-                "USDC address cannot be zero"
+            await expect(bridgeFactroy.deploy(owner.address, owner.address, zeroAddress)).to.be.revertedWith(
+                "feeCollector address cannot be zero"
             );
         });
         it("should depoly", async () => {
-            const bridge = await bridgeFactroy.deploy(owner.address, owner.address, owner.address, usdcToken.address);
+            const bridge = await bridgeFactroy.deploy(owner.address, owner.address, owner.address);
 
             expect(await bridge.tokenMessenger()).to.be.equal(owner.address);
             expect(await bridge.feeCollector()).to.be.equal(owner.address);
-            expect(await bridge.USDC()).to.be.equal(usdcToken.address);
         });
     });
     describe("bindBridge", () => {
@@ -102,18 +96,6 @@ describe("bridge", () => {
         });
     });
     describe("store", () => {
-        it("should revert setUSDC if not owner", async () => {
-            const { user, bridge } = await loadFixture(deployBridgeFixture);
-            await expect(bridge.connect(user).setUSDC(user.address)).to.be.revertedWith("Ownable: caller is not the owner");
-        });
-        it("should revert setUSDC to zero", async () => {
-            const { bridge } = await loadFixture(deployBridgeFixture);
-            await expect(bridge.setUSDC(zeroAddress)).to.be.revertedWith("USDC address cannot be zero");
-        });
-        it("should setUSDC", async () => {
-            const { bridge, usdcToken } = await loadFixture(deployBridgeFixture);
-            await expect(bridge.setUSDC(usdcToken.address)).to.emit(bridge, "SetUSDC").withArgs(usdcToken.address);
-        });
         it("should revert setCallProxy if not owner", async () => {
             const { user, bridge } = await loadFixture(deployBridgeFixture);
             await expect(bridge.connect(user).setCallProxy(user.address)).to.be.revertedWith(
@@ -188,11 +170,11 @@ describe("bridge", () => {
             await expect(bridge.unpause()).to.emit(bridge, "Unpaused").withArgs(owner.address);
         });
         it("should revert bridgeOut if paused", async () => {
-            const { owner, bridge } = await loadFixture(deployBridgeFixture);
+            const { owner, usdcToken, bridge } = await loadFixture(deployBridgeFixture);
             await bridge.pause();
-            await expect(bridge.bridgeOut(0, 0, addressToBytes32(owner.address), zeroAddress)).to.be.revertedWith(
-                "Pausable: paused"
-            );
+            await expect(
+                bridge.bridgeOut(usdcToken.address, 0, 0, addressToBytes32(owner.address), zeroAddress)
+            ).to.be.revertedWith("Pausable: paused");
         });
         it("should revert bridgeIn if paused", async () => {
             const { bridge } = await loadFixture(deployBridgeFixture);
@@ -202,34 +184,49 @@ describe("bridge", () => {
     });
     describe("bridgeOut", () => {
         it("should revert if invalid destinationDomain", async () => {
-            const { owner, bridge } = await loadFixture(deployBridgeFixture);
-            await expect(bridge.bridgeOut(0, 0, addressToBytes32(owner.address), zeroAddress)).to.be.revertedWith(
-                "target bridge not enabled"
-            );
+            const { owner, usdcToken, bridge } = await loadFixture(deployBridgeFixture);
+            await expect(
+                bridge.bridgeOut(usdcToken.address, 0, 0, addressToBytes32(owner.address), zeroAddress)
+            ).to.be.revertedWith("target bridge not enabled");
         });
         it("should revert if sender is callProxy", async () => {
-            const { owner, bridge, callProxy } = await loadFixture(deployBridgeFixture);
+            const { owner, usdcToken, bridge, callProxy } = await loadFixture(deployBridgeFixture);
             const callProxyAccount = await getContractAccount(callProxy);
             await bridge.bindBridge(0, addressToBytes32(bridge.address));
             await bridge.setCallProxy(callProxy.address);
             await expect(
-                bridge.connect(callProxyAccount).bridgeOut(0, 0, addressToBytes32(owner.address), zeroAddress)
+                bridge
+                    .connect(callProxyAccount)
+                    .bridgeOut(usdcToken.address, 0, 0, addressToBytes32(owner.address), zeroAddress)
             ).to.be.revertedWith("forbidden");
         });
         it("should revert if recipient is zeroAddress", async () => {
-            const { bridge } = await loadFixture(deployBridgeFixture);
+            const { usdcToken, bridge } = await loadFixture(deployBridgeFixture);
             await bridge.bindBridge(0, addressToBytes32(bridge.address));
-            await expect(bridge.bridgeOut(0, 0, addressToBytes32(zeroAddress), zeroAddress)).to.be.revertedWith(
-                "recipient address cannot be zero"
-            );
+            await expect(
+                bridge.bridgeOut(usdcToken.address, 0, 0, addressToBytes32(zeroAddress), zeroAddress)
+            ).to.be.revertedWith("recipient address cannot be zero");
         });
         it("should bridgeOut", async () => {
-            const { owner, user, bridge } = await loadFixture(deployBridgeFixture);
+            const { owner, user, usdcToken, bridge } = await loadFixture(deployBridgeFixture);
             await bridge.bindBridge(0, addressToBytes32(bridge.address));
-            await expect(bridge.connect(user).bridgeOut(0, 0, addressToBytes32(owner.address), zeroAddress, { value: 1 }))
+            await expect(
+                bridge
+                    .connect(user)
+                    .bridgeOut(usdcToken.address, 0, 0, addressToBytes32(owner.address), zeroAddress, { value: 1 })
+            )
                 .to.changeEtherBalances([user, bridge, owner], [-1, 0, 1])
                 .to.be.emit(bridge, "BridgeOut")
-                .withArgs(user.address, 0, 0, 1, addressToBytes32(owner.address.toLowerCase()), zeroAddress, 1);
+                .withArgs(
+                    user.address,
+                    usdcToken.address,
+                    0,
+                    0,
+                    1,
+                    addressToBytes32(owner.address.toLowerCase()),
+                    zeroAddress,
+                    1
+                );
         });
     });
     describe("bridgeIn", () => {
@@ -237,8 +234,9 @@ describe("bridge", () => {
         beforeEach(async () => {
             const owner = getWalletByIndex(0);
             args = ethers.utils.solidityPack(
-                ["bytes", "bytes", "bytes", "bytes"],
+                ["bytes", "bytes", "bytes", "bytes", "bytes"],
                 [
+                    writeVarBytes(zeroAddress),
                     writeVarBytes(owner.address),
                     writeVarBytes(signMessage(owner.address, owner)),
                     writeVarBytes(owner.address),
@@ -287,11 +285,13 @@ describe("bridge", () => {
             await expect(bridge.bridgeIn(args, sig)).to.be.revertedWith("Invalid signature: not attester");
         });
         it("should revert if invalid receive message", async () => {
-            const { owner, bridge, usdcToken } = await loadFixture(deployBridgeFixture);
+            const { owner, usdcToken, bridge } = await loadFixture(deployBridgeFixture);
 
+            // invalid args.recipient
             const args = ethers.utils.solidityPack(
-                ["bytes", "bytes", "bytes", "bytes"],
+                ["bytes", "bytes", "bytes", "bytes", "bytes"],
                 [
+                    writeVarBytes(usdcToken.address),
                     writeVarBytes("0x00"),
                     writeVarBytes(signMessage("0x00", owner)),
                     writeVarBytes(owner.address),
@@ -302,11 +302,12 @@ describe("bridge", () => {
             await expect(bridge.bridgeIn(args, sig)).to.be.revertedWith("bytes length does not match address");
         });
         it("should revert if invalid receive attestation", async () => {
-            const { owner, bridge } = await loadFixture(deployBridgeFixture);
+            const { owner, usdcToken, bridge } = await loadFixture(deployBridgeFixture);
 
             const args = ethers.utils.solidityPack(
-                ["bytes", "bytes", "bytes", "bytes"],
+                ["bytes", "bytes", "bytes", "bytes", "bytes"],
                 [
+                    writeVarBytes(usdcToken.address),
                     writeVarBytes(owner.address),
                     writeVarBytes("0x00"),
                     writeVarBytes(owner.address),
@@ -317,17 +318,28 @@ describe("bridge", () => {
             await expect(bridge.bridgeIn(args, sig)).to.be.revertedWith("Invalid attestation length");
         });
         it("should revert if error receiveMessage recipient", async () => {
-            const { owner, bridge } = await loadFixture(deployBridgeFixture);
+            const { owner, usdcToken, bridge } = await loadFixture(deployBridgeFixture);
+
+            const args = ethers.utils.solidityPack(
+                ["bytes", "bytes", "bytes", "bytes", "bytes"],
+                [
+                    writeVarBytes(usdcToken.address),
+                    writeVarBytes(owner.address),
+                    writeVarBytes(signMessage(owner.address, owner)),
+                    writeVarBytes(owner.address),
+                    writeVarBytes(emptyString),
+                ]
+            );
 
             const sig = signMessage(args, owner);
             await expect(bridge.bridgeIn(args, sig)).to.be.revertedWith("amount cannot be zero");
         });
         it("should revert if error bridgeIn recipient", async () => {
-            const { owner, bridge } = await loadFixture(deployBridgeFixture);
-            const amount = 10;
+            const { owner, usdcToken, bridge } = await loadFixture(deployBridgeFixture);
             const args = ethers.utils.solidityPack(
-                ["bytes", "bytes", "bytes", "bytes"],
+                ["bytes", "bytes", "bytes", "bytes", "bytes"],
                 [
+                    writeVarBytes(usdcToken.address),
                     writeVarBytes(bridge.address),
                     writeVarBytes(signMessage(bridge.address, owner)),
                     writeVarBytes(zeroAddress),
@@ -342,8 +354,9 @@ describe("bridge", () => {
             const { owner, bridge, usdcToken } = await loadFixture(deployBridgeFixture);
             const amount = 10;
             const args = ethers.utils.solidityPack(
-                ["bytes", "bytes", "bytes", "bytes"],
+                ["bytes", "bytes", "bytes", "bytes", "bytes"],
                 [
+                    writeVarBytes(usdcToken.address),
                     writeVarBytes(bridge.address),
                     writeVarBytes(signMessage(bridge.address, owner)),
                     writeVarBytes(owner.address),
@@ -353,7 +366,7 @@ describe("bridge", () => {
             const sig = signMessage(args, owner);
             await expect(bridge.bridgeIn(args, sig))
                 .to.emit(bridge, "BridgeIn")
-                .withArgs(owner.address, owner.address, amount)
+                .withArgs(owner.address, owner.address, usdcToken.address, amount)
                 .to.emit(usdcToken, "Transfer")
                 .withArgs(bridge.address, owner.address, amount);
         });
@@ -373,8 +386,9 @@ describe("bridge", () => {
             ]);
             const calldata = await callProxy.encodeCallDataForExternalCall(mockPool.address, poolcalldata);
             const args = ethers.utils.solidityPack(
-                ["bytes", "bytes", "bytes", "bytes"],
+                ["bytes", "bytes", "bytes", "bytes", "bytes"],
                 [
+                    writeVarBytes(usdcToken.address),
                     writeVarBytes(bridge.address),
                     writeVarBytes(signMessage(bridge.address, owner)),
                     writeVarBytes(owner.address),
@@ -387,7 +401,7 @@ describe("bridge", () => {
             //              callProxy -5-> owner
             await expect(bridge.bridgeIn(args, sig))
                 .to.emit(bridge, "BridgeIn")
-                .withArgs(owner.address, owner.address, amount)
+                .withArgs(owner.address, owner.address, usdcToken.address, amount)
                 .to.emit(usdcToken, "Transfer")
                 .withArgs(bridge.address, callProxy.address, amount)
                 .to.emit(usdcToken, "Transfer")
@@ -395,9 +409,7 @@ describe("bridge", () => {
                 .to.emit(pusdcToken, "Transfer")
                 .withArgs(mockPool.address, user.address, (amount / 2) * 2)
                 .to.emit(usdcToken, "Transfer")
-                .withArgs(callProxy.address, owner.address, amount / 2)
-                .to.emit(bridge, "BridgeIn")
-                .withArgs(owner.address, owner.address, amount);
+                .withArgs(callProxy.address, owner.address, amount / 2);
         });
     });
     describe("externalCall", () => {
