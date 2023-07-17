@@ -16,29 +16,29 @@ import {
 
 describe("bridge", () => {
     describe("constructor", () => {
-        let owner: SignerWithAddress, usdcToken: ERC20Token, bridgeFactroy: Bridge__factory;
+        let owner: SignerWithAddress, usdcToken: ERC20Token, bridgeFactory: Bridge__factory;
         beforeEach(async () => {
             [owner] = await ethers.getSigners();
             usdcToken = await loadFixture(deployERC20TokenFixture);
-            bridgeFactroy = await ethers.getContractFactory("Bridge");
+            bridgeFactory = await ethers.getContractFactory("Bridge");
         });
-        it("should revert depoly if tokenMessanger is zero", async () => {
-            await expect(bridgeFactroy.deploy(zeroAddress, owner.address, owner.address)).to.be.revertedWith(
+        it("should revert deploy if tokenMessenger is zero", async () => {
+            await expect(bridgeFactory.deploy(zeroAddress, owner.address, owner.address)).to.be.revertedWith(
                 "tokenMessenger address cannot be zero"
             );
         });
-        it("should revert depoly if attester is zero", async () => {
-            await expect(bridgeFactroy.deploy(owner.address, zeroAddress, owner.address)).to.be.revertedWith(
+        it("should revert deploy if attester is zero", async () => {
+            await expect(bridgeFactory.deploy(owner.address, zeroAddress, owner.address)).to.be.revertedWith(
                 "New attester must be nonzero"
             );
         });
-        it("should revert depoly if feeCollector is zero", async () => {
-            await expect(bridgeFactroy.deploy(owner.address, owner.address, zeroAddress)).to.be.revertedWith(
+        it("should revert deploy if feeCollector is zero", async () => {
+            await expect(bridgeFactory.deploy(owner.address, owner.address, zeroAddress)).to.be.revertedWith(
                 "feeCollector address cannot be zero"
             );
         });
-        it("should depoly", async () => {
-            const bridge = await bridgeFactroy.deploy(owner.address, owner.address, owner.address);
+        it("should deploy", async () => {
+            const bridge = await bridgeFactory.deploy(owner.address, owner.address, owner.address);
 
             expect(await bridge.tokenMessenger()).to.be.equal(owner.address);
             expect(await bridge.feeCollector()).to.be.equal(owner.address);
@@ -73,6 +73,86 @@ describe("bridge", () => {
                     [0, 1],
                     [addressToBytes32(bridge.address.toLowerCase()), addressToBytes32(bridge.address.toLowerCase())]
                 );
+        });
+    });
+    describe("bridgeToken", () => {
+        it("should revert disable bridgeToken if not owner", async () => {
+            const { user, usdcToken, bridge } = await loadFixture(deployBridgeFixture);
+            await expect(bridge.connect(user).disableBridgeToken(usdcToken.address)).to.be.revertedWith(
+                "Ownable: caller is not the owner"
+            );
+        });
+        it("should revert disable bridgeToken if address is zero", async () => {
+            const { bridge } = await loadFixture(deployBridgeFixture);
+            await expect(bridge.disableBridgeToken(zeroAddress)).to.be.revertedWith("token address cannot be zero");
+        });
+        it("should disable bridgeToken", async () => {
+            const { usdcToken, bridge } = await loadFixture(deployBridgeFixture);
+            await expect(bridge.disableBridgeToken(usdcToken.address))
+                .to.emit(bridge, "DisableBridgeToken")
+                .withArgs(usdcToken.address);
+        });
+        it("should revert enable bridgeToken if not owner", async () => {
+            const { user, usdcToken, bridge } = await loadFixture(deployBridgeFixture);
+            await expect(bridge.connect(user).enableBridgeToken(usdcToken.address)).to.be.revertedWith(
+                "Ownable: caller is not the owner"
+            );
+        });
+        it("should revert enable bridgeToken if address is zero", async () => {
+            const { bridge } = await loadFixture(deployBridgeFixture);
+            await expect(bridge.enableBridgeToken(zeroAddress)).to.be.revertedWith("token address cannot be zero");
+        });
+        it("should enable bridgeToken", async () => {
+            const { usdcToken, bridge } = await loadFixture(deployBridgeFixture);
+
+            await bridge.disableBridgeToken(usdcToken.address);
+            expect(await bridge.disabledBridgeTokens(usdcToken.address)).to.be.equal(true);
+
+            await expect(bridge.enableBridgeToken(usdcToken.address))
+                .to.emit(bridge, "EnableBridgeToken")
+                .withArgs(usdcToken.address);
+
+            expect(await bridge.disabledBridgeTokens(usdcToken.address)).to.be.equal(false);
+        });
+    });
+    describe("router", () => {
+        it("should revert enable router if not owner", async () => {
+            const { user, usdcToken, bridge } = await loadFixture(deployBridgeFixture);
+            await expect(bridge.connect(user).enableRouter(usdcToken.address, 1)).to.be.revertedWith(
+                "Ownable: caller is not the owner"
+            );
+        });
+        it("should revert enable router if address is zero", async () => {
+            const { bridge } = await loadFixture(deployBridgeFixture);
+            await expect(bridge.enableRouter(zeroAddress, 1)).to.be.revertedWith("token address cannot be zero");
+        });
+        it("should enable router", async () => {
+            const { usdcToken, bridge } = await loadFixture(deployBridgeFixture);
+            await expect(bridge.enableRouter(usdcToken.address, 1))
+                .to.emit(bridge, "EnableRoute")
+                .withArgs(usdcToken.address, 1);
+        });
+        it("should revert disable router if not owner", async () => {
+            const { user, usdcToken, bridge } = await loadFixture(deployBridgeFixture);
+            await expect(bridge.connect(user).disableRoute(usdcToken.address, 1)).to.be.revertedWith(
+                "Ownable: caller is not the owner"
+            );
+        });
+        it("should revert disable router if address is zero", async () => {
+            const { bridge } = await loadFixture(deployBridgeFixture);
+            await expect(bridge.disableRoute(zeroAddress, 1)).to.be.revertedWith("token address cannot be zero");
+        });
+        it("should disable router", async () => {
+            const { usdcToken, bridge } = await loadFixture(deployBridgeFixture);
+
+            await bridge.enableRouter(usdcToken.address, 1);
+            expect(await bridge.disabledRoutes(usdcToken.address, 1)).to.be.equal(false);
+
+            await expect(bridge.disableRoute(usdcToken.address, 1))
+                .to.emit(bridge, "DisableRoute")
+                .withArgs(usdcToken.address, 1);
+
+            expect(await bridge.disabledRoutes(usdcToken.address, 1)).to.be.equal(true);
         });
     });
     describe("tokenMessenger", () => {
@@ -206,6 +286,24 @@ describe("bridge", () => {
             await expect(
                 bridge.bridgeOut(usdcToken.address, 0, 0, addressToBytes32(zeroAddress), zeroAddress)
             ).to.be.revertedWith("recipient address cannot be zero");
+        });
+        it("should revert if token is disabled", async () => {
+            const { owner, usdcToken, bridge } = await loadFixture(deployBridgeFixture);
+            await bridge.bindBridge(0, addressToBytes32(bridge.address));
+            await bridge.disableBridgeToken(usdcToken.address);
+            await expect(
+                bridge.bridgeOut(usdcToken.address, 0, 0, addressToBytes32(owner.address), zeroAddress)
+            ).to.be.revertedWith("token not enabled");
+        });
+        it("should revert if route is disabled", async () => {
+            const { owner, usdcToken, bridge } = await loadFixture(deployBridgeFixture);
+            const destinationDomain = 1;
+
+            await bridge.bindBridge(destinationDomain, addressToBytes32(bridge.address));
+            await bridge.disableRoute(usdcToken.address, destinationDomain);
+            await expect(
+                bridge.bridgeOut(usdcToken.address, 0, destinationDomain, addressToBytes32(owner.address), zeroAddress)
+            ).to.be.revertedWith("route disabled");
         });
         it("should bridgeOut", async () => {
             const { owner, user, usdcToken, bridge } = await loadFixture(deployBridgeFixture);
@@ -373,18 +471,18 @@ describe("bridge", () => {
     });
     describe("bridgeInAndProxyCall", () => {
         it("should bridgeIn and send if invalid calldata", async () => {
-            const { bridge, callProxy, owner, user, usdcToken, pusdcToken, mockPool } = await loadFixture(
+            const { bridge, callProxy, owner, user, usdcToken, usdtToken, mockPool } = await loadFixture(
                 deployBridgeFixture
             );
             const amount = 10;
             await bridge.setCallProxy(callProxy.address);
-            const poolcalldata = mockPool.interface.encodeFunctionData("swap", [
+            const poolCalldata = mockPool.interface.encodeFunctionData("swap", [
                 usdcToken.address,
-                pusdcToken.address,
+                usdtToken.address,
                 amount / 2,
                 user.address,
             ]);
-            const calldata = await callProxy.encodeCallDataForExternalCall(mockPool.address, poolcalldata);
+            const calldata = await callProxy.encodeCallDataForExternalCall(mockPool.address, poolCalldata);
             const args = ethers.utils.solidityPack(
                 ["bytes", "bytes", "bytes", "bytes", "bytes"],
                 [
@@ -406,7 +504,7 @@ describe("bridge", () => {
                 .withArgs(bridge.address, callProxy.address, amount)
                 .to.emit(usdcToken, "Transfer")
                 .withArgs(callProxy.address, mockPool.address, amount / 2)
-                .to.emit(pusdcToken, "Transfer")
+                .to.emit(usdtToken, "Transfer")
                 .withArgs(mockPool.address, user.address, (amount / 2) * 2)
                 .to.emit(usdcToken, "Transfer")
                 .withArgs(callProxy.address, owner.address, amount / 2);

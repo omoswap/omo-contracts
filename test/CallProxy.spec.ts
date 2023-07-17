@@ -59,7 +59,7 @@ describe("callProxy", () => {
                 "CallProxy: no privilege"
             );
         });
-        it("should reveive token if invalid calldata", async () => {
+        it("should receive token if invalid calldata", async () => {
             const { callProxy, owner, user, usdcToken, mockPool } = await loadFixture(deployBridgeFixture);
             await callProxy.setBridge(owner.address);
             const calldata = await callProxy.encodeCallDataForExternalCall(mockPool.address, zeroAddress);
@@ -71,20 +71,20 @@ describe("callProxy", () => {
                 .to.emit(usdcToken, "Transfer")
                 .withArgs(callProxy.address, user.address, amount);
         });
-        it("should reveive token and call if not all token used", async () => {
-            const { callProxy, owner, user, usdcToken, pusdcToken, mockPool } = await loadFixture(deployBridgeFixture);
+        it("should receive token and call if not all token used", async () => {
+            const { callProxy, owner, user, usdcToken, usdtToken, mockPool } = await loadFixture(deployBridgeFixture);
             await callProxy.setBridge(owner.address);
 
             const amount = 10;
             usdcToken.transfer(callProxy.address, amount);
 
-            const poolcalldata = mockPool.interface.encodeFunctionData("swap", [
+            const poolCalldata = mockPool.interface.encodeFunctionData("swap", [
                 usdcToken.address,
-                pusdcToken.address,
+                usdtToken.address,
                 amount / 2,
                 user.address,
             ]);
-            const calldata = await callProxy.encodeCallDataForExternalCall(mockPool.address, poolcalldata);
+            const calldata = await callProxy.encodeCallDataForExternalCall(mockPool.address, poolCalldata);
 
             // callProxy -5-> user
             //           -5-> pool -10-> user
@@ -93,29 +93,29 @@ describe("callProxy", () => {
                 .withArgs(callProxy.address, user.address, amount / 2)
                 .to.emit(usdcToken, "Transfer")
                 .withArgs(callProxy.address, mockPool.address, amount / 2)
-                .to.emit(pusdcToken, "Transfer")
+                .to.emit(usdtToken, "Transfer")
                 .withArgs(mockPool.address, user.address, amount);
         });
         it("should proxyCall", async () => {
-            const { callProxy, owner, user, usdcToken, pusdcToken, mockPool } = await loadFixture(deployBridgeFixture);
+            const { callProxy, owner, user, usdcToken, usdtToken, mockPool } = await loadFixture(deployBridgeFixture);
             await callProxy.setBridge(owner.address);
 
             const amount = 10;
             usdcToken.transfer(callProxy.address, amount);
 
-            const poolcalldata = mockPool.interface.encodeFunctionData("swap", [
+            const poolCalldata = mockPool.interface.encodeFunctionData("swap", [
                 usdcToken.address,
-                pusdcToken.address,
+                usdtToken.address,
                 amount,
                 user.address,
             ]);
-            const calldata = await callProxy.encodeCallDataForExternalCall(mockPool.address, poolcalldata);
+            const calldata = await callProxy.encodeCallDataForExternalCall(mockPool.address, poolCalldata);
 
             // callProxy -10-> pool -20-> user
             await expect(callProxy.proxyCall(usdcToken.address, amount, user.address, calldata))
                 .to.emit(usdcToken, "Transfer")
                 .withArgs(callProxy.address, mockPool.address, amount)
-                .to.emit(pusdcToken, "Transfer")
+                .to.emit(usdtToken, "Transfer")
                 .withArgs(mockPool.address, user.address, amount * 2);
         });
     });

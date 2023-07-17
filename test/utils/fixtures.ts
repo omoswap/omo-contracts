@@ -32,8 +32,8 @@ export async function deployBridgeFixture() {
     const owner = getWalletByIndex(0);
     const user = getWalletByIndex(1);
     const usdcToken = await deployERC20TokenFixture("USDC", "USDC", 6);
-    const pusdcToken = await deployERC20TokenFixture("pUSDC", "pUSDC", 6);
-    const bridgeFactroy = await ethers.getContractFactory("Bridge");
+    const usdtToken = await deployERC20TokenFixture("USDT", "USDT", 6);
+    const bridgeFactory = await ethers.getContractFactory("Bridge");
     const callProxyFactory = await ethers.getContractFactory("CallProxy");
 
     const mockTokenMessenger = await mockTokenMessengerFixture();
@@ -42,7 +42,7 @@ export async function deployBridgeFixture() {
 
     mockTokenMessenger.localMessageTransmitter.returns(mockMessageTransmitter.address);
 
-    const bridge = await bridgeFactroy.deploy(mockTokenMessenger.address, owner.address, owner.address);
+    const bridge = await bridgeFactory.deploy(mockTokenMessenger.address, owner.address, owner.address);
     const callProxy = await callProxyFactory.deploy();
     await callProxy.setBridge(bridge.address);
 
@@ -53,10 +53,10 @@ export async function deployBridgeFixture() {
     await usdcToken.mint(owner.address, 1000);
     await usdcToken.mint(mockMessageTransmitter.address, 1000);
     await usdcToken.mint(mockPool.address, 1000);
-    await pusdcToken.mint(mockPool.address, 1000);
+    await usdtToken.mint(mockPool.address, 1000);
     await usdcToken.approve(bridge.address, 1000);
 
-    return { bridge, callProxy, owner, user, usdcToken, pusdcToken, mockPool, mockMessageTransmitter, mockTokenMessenger };
+    return { bridge, callProxy, owner, user, usdcToken, usdtToken, mockPool, mockMessageTransmitter, mockTokenMessenger };
 }
 
 export async function deployAggregatorFixture() {
@@ -79,29 +79,29 @@ export async function deployAggregatorFixture() {
     await mockUniswapV2Factory.createPair(WETH.address, tokenA.address);
     await mockUniswapV2Factory.createPair(tokenA.address, tokenB.address);
     await mockUniswapV2Factory.createPair(tokenB.address, tokenC.address);
-    console.log("MockUniswapv2Factory - init core hash: ", await mockUniswapV2Factory.generateInitCode());
+    console.log("MockUniswapV2Factory - init core hash: ", await mockUniswapV2Factory.generateInitCode());
 
-    const mockUniswapv2PoolFactory = await ethers.getContractFactory("MockUniswapv2Pool");
+    const mockUniswapV2PairFactory = await ethers.getContractFactory("MockUniswapV2Pair");
 
-    const mockUniswapv2PoolWETHA = mockUniswapv2PoolFactory.attach(
+    const mockUniswapV2PairWETHA = mockUniswapV2PairFactory.attach(
         await mockUniswapV2Factory.getPair(WETH.address, tokenA.address)
     );
-    const mockUniswapv2PoolAB = mockUniswapv2PoolFactory.attach(
+    const mockUniswapV2PairAB = mockUniswapV2PairFactory.attach(
         await mockUniswapV2Factory.getPair(tokenA.address, tokenB.address)
     );
-    const mockUniswapv2PoolBC = mockUniswapv2PoolFactory.attach(
+    const mockUniswapV2PairBC = mockUniswapV2PairFactory.attach(
         await mockUniswapV2Factory.getPair(tokenB.address, tokenC.address)
     );
 
     await tokenA.mint(bridgeFixture.owner.address, 10000);
     await tokenA.approve(OMOEthereumUniswapAggregator.address, 10000);
     await WETH.deposit({ value: 10000 });
-    await WETH.transfer(mockUniswapv2PoolWETHA.address, 10000);
-    await tokenA.mint(mockUniswapv2PoolWETHA.address, 10000);
-    await tokenA.mint(mockUniswapv2PoolAB.address, 10000);
-    await tokenB.mint(mockUniswapv2PoolAB.address, 10000);
-    await tokenB.mint(mockUniswapv2PoolBC.address, 10000);
-    await tokenC.mint(mockUniswapv2PoolBC.address, 10000);
+    await WETH.transfer(mockUniswapV2PairWETHA.address, 10000);
+    await tokenA.mint(mockUniswapV2PairWETHA.address, 10000);
+    await tokenA.mint(mockUniswapV2PairAB.address, 10000);
+    await tokenB.mint(mockUniswapV2PairAB.address, 10000);
+    await tokenB.mint(mockUniswapV2PairBC.address, 10000);
+    await tokenC.mint(mockUniswapV2PairBC.address, 10000);
 
     await bridgeFixture.bridge.bindBridge(1, addressToBytes32(bridgeFixture.bridge.address));
     await bridgeFixture.bridge.setCallProxy(bridgeFixture.callProxy.address);
@@ -112,9 +112,9 @@ export async function deployAggregatorFixture() {
     return {
         OMOEthereumUniswapAggregator,
         mockUniswapV2Factory,
-        mockUniswapv2PoolWETHA,
-        mockUniswapv2PoolAB,
-        mockUniswapv2PoolBC,
+        mockUniswapV2PairWETHA,
+        mockUniswapV2PairAB,
+        mockUniswapV2PairBC,
         WETH,
         path,
         tokenA,

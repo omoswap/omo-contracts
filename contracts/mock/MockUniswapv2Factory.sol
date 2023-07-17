@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.0;
 
-import './MockUniswapv2Pool.sol';
+import './MockUniswapV2Pair.sol';
 import "hardhat/console.sol";
 
 contract MockUniswapV2Factory {
     mapping(address => mapping(address => address)) public getPair;
 
     function generateInitCode() external pure returns (bytes32) {
-        bytes memory initCode = type(MockUniswapv2Pool).creationCode;
+        bytes memory initCode = type(MockUniswapV2Pair).creationCode;
         return keccak256(initCode);
     }
 
@@ -18,7 +18,7 @@ contract MockUniswapV2Factory {
         require(token0 != address(0), 'UniswapV2: ZERO_ADDRESS');
         require(getPair[token0][token1] == address(0), 'UniswapV2: PAIR_EXISTS'); // single check is sufficient
         
-        bytes memory bytecode = type(MockUniswapv2Pool).creationCode;
+        bytes memory bytecode = type(MockUniswapV2Pair).creationCode;
         bytes32 salt = keccak256(abi.encodePacked(token0, token1));
 
         assembly {
@@ -27,7 +27,7 @@ contract MockUniswapV2Factory {
                 revert(0, 0)
             }
         }
-        MockUniswapv2Pool(pair).initialize(token0, token1);
+        MockUniswapV2Pair(pair).initialize(token0, token1);
         getPair[token0][token1] = pair;
         getPair[token1][token0] = pair; // populate mapping in the reverse direction
 

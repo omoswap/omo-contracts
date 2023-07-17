@@ -4,7 +4,7 @@ import { ethers } from "hardhat";
 import { deployAggregatorFixture } from "./utils/fixtures";
 import { addressToBytes32, getContractAccount, zeroAddress } from "./utils/utilities";
 
-// MockUniswapv2Pool code hash 2f508cfa0eec5c1033ebe2fbab046b136626fee46b9eb25065ea639cebb444d5
+// MockUniswapV2Pair code hash badcace35eca3975b86a7d744a198f996983b3f8f265644b0c0db50289070a24
 
 describe("OMOEthereumUniswapAggregator", function () {
     describe("TokenForTokens", function () {
@@ -113,13 +113,13 @@ describe("OMOEthereumUniswapAggregator", function () {
                 tokenB,
                 tokenC,
                 OMOEthereumUniswapAggregator,
-                mockUniswapv2PoolAB,
-                mockUniswapv2PoolBC,
+                mockUniswapV2PairAB,
+                mockUniswapV2PairBC,
             } = await loadFixture(deployAggregatorFixture);
 
-            // owner               -10 tokenA -> mockUniswapv2PoolAB
-            // mockUniswapv2PoolAB -20 tokenB -> mockUniswapv2PoolBC
-            // mockUniswapv2PoolBC -40 tokenC -> user
+            // owner               -10 tokenA -> mockUniswapV2PairAB
+            // mockUniswapV2PairAB -20 tokenB -> mockUniswapV2PairBC
+            // mockUniswapV2PairBC -40 tokenC -> user
             await expect(
                 OMOEthereumUniswapAggregator.swapExactTokensForTokensSupportingFeeOnTransferTokens(
                     10,
@@ -129,9 +129,9 @@ describe("OMOEthereumUniswapAggregator", function () {
                     false
                 )
             )
-                .to.changeTokenBalances(tokenA, [owner, mockUniswapv2PoolAB], [-10, 10])
-                .to.changeTokenBalances(tokenB, [mockUniswapv2PoolAB, mockUniswapv2PoolBC], [-20, 20])
-                .to.changeTokenBalances(tokenC, [mockUniswapv2PoolBC, user], [-40, 40]);
+                .to.changeTokenBalances(tokenA, [owner, mockUniswapV2PairAB], [-10, 10])
+                .to.changeTokenBalances(tokenB, [mockUniswapV2PairAB, mockUniswapV2PairBC], [-20, 20])
+                .to.changeTokenBalances(tokenC, [mockUniswapV2PairBC, user], [-40, 40]);
         });
     });
 
@@ -144,15 +144,15 @@ describe("OMOEthereumUniswapAggregator", function () {
                 tokenB,
                 tokenC,
                 OMOEthereumUniswapAggregator,
-                mockUniswapv2PoolAB,
-                mockUniswapv2PoolBC,
+                mockUniswapV2PairAB,
+                mockUniswapV2PairBC,
                 bridge,
             } = await loadFixture(deployAggregatorFixture);
 
-            // owner               -10 tokenA -> mockUniswapv2PoolAB
-            // mockUniswapv2PoolAB -20 tokenB -> mockUniswapv2PoolBC
-            // mockUniswapv2PoolBC -1  tokenC -> fee
-            // mockUniswapv2PoolBC -39 tokenC -> bridge
+            // owner               -10 tokenA -> mockUniswapV2PairAB
+            // mockUniswapV2PairAB -20 tokenB -> mockUniswapV2PairBC
+            // mockUniswapV2PairBC -1  tokenC -> fee
+            // mockUniswapV2PairBC -39 tokenC -> bridge
             await OMOEthereumUniswapAggregator.setAggregatorFee(4.5 * 10 ** 8);
 
             await expect(
@@ -165,9 +165,9 @@ describe("OMOEthereumUniswapAggregator", function () {
                     zeroAddress
                 )
             )
-                .to.changeTokenBalances(tokenA, [owner, mockUniswapv2PoolAB], [-10, 10])
-                .to.changeTokenBalances(tokenB, [mockUniswapv2PoolAB, mockUniswapv2PoolBC], [-20, 20])
-                .to.changeTokenBalances(tokenC, [mockUniswapv2PoolBC, bridge], [-40, 39])
+                .to.changeTokenBalances(tokenA, [owner, mockUniswapV2PairAB], [-10, 10])
+                .to.changeTokenBalances(tokenB, [mockUniswapV2PairAB, mockUniswapV2PairBC], [-20, 20])
+                .to.changeTokenBalances(tokenC, [mockUniswapV2PairBC, bridge], [-40, 39])
                 .to.be.emit(bridge, "BridgeOut")
                 .withArgs(
                     OMOEthereumUniswapAggregator.address,
@@ -215,14 +215,14 @@ describe("OMOEthereumUniswapAggregator", function () {
                 tokenB,
                 tokenC,
                 OMOEthereumUniswapAggregator,
-                mockUniswapv2PoolAB,
-                mockUniswapv2PoolBC,
+                mockUniswapV2PairAB,
+                mockUniswapV2PairBC,
             } = await loadFixture(deployAggregatorFixture);
 
-            // owner                 -5  eth    -> mockUniswapv2PoolWTHA
-            // mockUniswapv2PoolWTHA -10 tokenA -> mockUniswapv2PoolAB
-            // mockUniswapv2PoolAB   -20 tokenB -> mockUniswapv2PoolBC
-            // mockUniswapv2PoolBC   -40 tokenC -> user
+            // owner                 -5  eth    -> mockUniswapV2PairWTHA
+            // mockUniswapV2PairWTHA -10 tokenA -> mockUniswapV2PairAB
+            // mockUniswapV2PairAB   -20 tokenB -> mockUniswapV2PairBC
+            // mockUniswapV2PairBC   -40 tokenC -> user
             // minOut = 39
             await expect(
                 OMOEthereumUniswapAggregator.swapExactETHForTokensSupportingFeeOnTransferTokens(
@@ -234,10 +234,10 @@ describe("OMOEthereumUniswapAggregator", function () {
                     }
                 )
             )
-                .to.changeEtherBalances([owner, mockUniswapv2PoolAB], [-5, 5])
-                .to.changeTokenBalances(tokenA, [owner, mockUniswapv2PoolAB], [-10, 10])
-                .to.changeTokenBalances(tokenB, [mockUniswapv2PoolAB, mockUniswapv2PoolBC], [-20, 20])
-                .to.changeTokenBalances(tokenC, [mockUniswapv2PoolBC, user], [-40, 40]);
+                .to.changeEtherBalances([owner, mockUniswapV2PairAB], [-5, 5])
+                .to.changeTokenBalances(tokenA, [owner, mockUniswapV2PairAB], [-10, 10])
+                .to.changeTokenBalances(tokenB, [mockUniswapV2PairAB, mockUniswapV2PairBC], [-20, 20])
+                .to.changeTokenBalances(tokenC, [mockUniswapV2PairBC, user], [-40, 40]);
         });
     });
 
@@ -268,15 +268,15 @@ describe("OMOEthereumUniswapAggregator", function () {
                 tokenB,
                 tokenC,
                 OMOEthereumUniswapAggregator,
-                mockUniswapv2PoolAB,
-                mockUniswapv2PoolBC,
+                mockUniswapV2PairAB,
+                mockUniswapV2PairBC,
                 bridge,
             } = await loadFixture(deployAggregatorFixture);
 
-            // owner                 -5  eth    -> mockUniswapv2PoolWTHA
-            // mockUniswapv2PoolWTHA -10 tokenA -> mockUniswapv2PoolAB
-            // mockUniswapv2PoolAB   -20 tokenB -> mockUniswapv2PoolBC
-            // mockUniswapv2PoolBC   -40 tokenC -> user
+            // owner                 -5  eth    -> mockUniswapV2PairWTHA
+            // mockUniswapV2PairWTHA -10 tokenA -> mockUniswapV2PairAB
+            // mockUniswapV2PairAB   -20 tokenB -> mockUniswapV2PairBC
+            // mockUniswapV2PairBC   -40 tokenC -> user
             // minOut = 39
             await expect(
                 OMOEthereumUniswapAggregator.swapExactETHForTokensSupportingFeeOnTransferTokensCrossChain(
@@ -291,10 +291,10 @@ describe("OMOEthereumUniswapAggregator", function () {
                     }
                 )
             )
-                .to.changeEtherBalances([owner, mockUniswapv2PoolAB], [-5, 5])
-                .to.changeTokenBalances(tokenA, [owner, mockUniswapv2PoolAB], [-10, 10])
-                .to.changeTokenBalances(tokenB, [mockUniswapv2PoolAB, mockUniswapv2PoolBC], [-20, 20])
-                .to.changeTokenBalances(tokenC, [mockUniswapv2PoolBC, bridge], [-40, 40])
+                .to.changeEtherBalances([owner, mockUniswapV2PairAB], [-5, 5])
+                .to.changeTokenBalances(tokenA, [owner, mockUniswapV2PairAB], [-10, 10])
+                .to.changeTokenBalances(tokenB, [mockUniswapV2PairAB, mockUniswapV2PairBC], [-20, 20])
+                .to.changeTokenBalances(tokenC, [mockUniswapV2PairBC, bridge], [-40, 40])
                 .to.be.emit(bridge, "BridgeOut")
                 .withArgs(
                     OMOEthereumUniswapAggregator.address,
