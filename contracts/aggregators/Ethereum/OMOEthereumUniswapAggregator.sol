@@ -154,11 +154,6 @@ contract OMOEthereumUniswapAggregator is Ownable {
         return amountOut;
     }
 
-    function _sendETH(address to, uint256 amount) internal {
-        (bool success,) = to.call{value:amount}(new bytes(0));
-        require(success, 'OMOAggregator: ETH_TRANSFER_FAILED');
-    }
-
     // **** SWAP (supporting fee-on-transfer tokens) ****
     // requires the initial amount to have already been sent to the first pair
     function _swapSupportingFeeOnTransferTokens(address[] memory path, address _to) internal {
@@ -178,6 +173,11 @@ contract OMOEthereumUniswapAggregator is Ownable {
             address to = i < path.length - 2 ? EthereumUniswapV2Library.pairFor(factory, output, path[i + 2]) : _to;
             pair.swap(amount0Out, amount1Out, to, new bytes(0));
         }
+    }
+
+    function _sendETH(address to, uint256 amount) internal {
+        (bool success,) = to.call{value:amount}(new bytes(0));
+        require(success, 'OMOAggregator: ETH_TRANSFER_FAILED');
     }
 
     function setWETH(address _weth) external onlyOwner {
