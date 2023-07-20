@@ -7,7 +7,6 @@ import "../../interfaces/IBridge.sol";
 import "../interfaces/IUniswapV2Pair.sol";
 import "../../assets/interfaces/IWETH.sol";
 import "./libraries/EthereumUniswapV2Library.sol";
-import "../interfaces/IUniswapV2Factory.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -41,7 +40,11 @@ contract OMOEthereumUniswapAggregator is Ownable {
     receive() external payable { }
 
     function swapExactTokensForTokensSupportingFeeOnTransferTokens(
-        uint256 amountIn, address[] calldata path, address to, uint amountOutMin, bool unwrapETH
+        uint256 amountIn,
+        address[] calldata path,
+        address to,
+        uint amountOutMin,
+        bool unwrapETH
     ) external {
         if (amountIn == 0) {
             require(msg.sender == IBridge(bridge).callProxy(), "invalid caller");
@@ -54,35 +57,35 @@ contract OMOEthereumUniswapAggregator is Ownable {
         address toToken = path[path.length-1];
 
         if (unwrapETH) {
-            require(path[path.length - 1] == WETH, "OMOAggregator: INVALID_PATH");
+            require(toToken == WETH, "OMOAggregator: INVALID_PATH");
             IWETH(WETH).withdraw(amountOut);
             _sendETH(feeCollector, feeAmount);
             _sendETH(to, amountOut - feeAmount);
             toToken = address(0);
         } else {
-            IERC20(path[path.length-1]).safeTransfer(feeCollector, feeAmount);
-            IERC20(path[path.length-1]).safeTransfer(to, amountOut - feeAmount);
+            IERC20(toToken).safeTransfer(feeCollector, feeAmount);
+            IERC20(toToken).safeTransfer(to, amountOut - feeAmount);
         }
 
         emit LOG_AGG_SWAP(msg.sender, amountIn, path[0], amountOut, toToken, to, feeAmount);
     }
 
     function swapExactTokensForTokensSupportingFeeOnTransferTokensCrossChain(
-        uint amountIn, uint amountOutMin, address[] calldata path,  // args for dex
-        uint32 destinationDomain, address to, bytes memory callData // args for wrapper
+        uint amountIn, uint amountOutMin, address[] calldata path,         // args for dex
+        uint32 destinationDomain, bytes32 recipient, bytes memory callData // args for wrapper
     ) external payable {
         uint amountOut = _swapExactTokensForTokensSupportingFeeOnTransferTokens(amountIn, amountOutMin, path);
         uint feeAmount = amountOut * aggregatorFee / FEE_DENOMINATOR;
         address bridgeToken = path[path.length-1];
         IERC20(bridgeToken).safeTransfer(feeCollector, feeAmount);
-        emit LOG_AGG_SWAP(msg.sender, amountIn, path[0], amountOut, bridgeToken, to, feeAmount);
+        emit LOG_AGG_SWAP(msg.sender, amountIn, path[0], amountOut, bridgeToken, msg.sender, feeAmount);
 
         uint bridgeAmount = amountOut - feeAmount;
 
         IERC20(bridgeToken).safeApprove(bridge, bridgeAmount);
 
         IBridge(bridge).bridgeOut{value: msg.value}(
-            bridgeToken, bridgeAmount, destinationDomain, addressToBytes32(to), callData
+            bridgeToken, bridgeAmount, destinationDomain, recipient, callData
         );
     }
 
@@ -114,21 +117,21 @@ contract OMOEthereumUniswapAggregator is Ownable {
     }
 
     function swapExactETHForTokensSupportingFeeOnTransferTokensCrossChain(
-        uint amountOutMin, address[] calldata path, uint netFee,     // args for dex
-        uint32 destinationDomain, address to, bytes memory callData  // args for wrapper
+        uint amountOutMin, address[] calldata path, uint netFee,            // args for dex
+        uint32 destinationDomain, bytes32 recipient, bytes memory callData  // args for wrapper
     ) external payable {
         uint amountOut = _swapExactETHForTokensSupportingFeeOnTransferTokens(amountOutMin, path, netFee);
         uint feeAmount = amountOut * aggregatorFee / FEE_DENOMINATOR;
         address bridgeToken = path[path.length-1];
         IERC20(bridgeToken).safeTransfer(feeCollector, feeAmount);
-        emit LOG_AGG_SWAP(msg.sender, msg.value, address(0), amountOut, bridgeToken, to, feeAmount);
+        emit LOG_AGG_SWAP(msg.sender, msg.value, address(0), amountOut, bridgeToken, msg.sender, feeAmount);
 
         uint bridgeAmount = amountOut - feeAmount;
 
         IERC20(bridgeToken).safeApprove(bridge, bridgeAmount);
 
         IBridge(bridge).bridgeOut{value: netFee}(
-            bridgeToken, bridgeAmount, destinationDomain, addressToBytes32(to), callData
+            bridgeToken, bridgeAmount, destinationDomain, recipient, callData
         );
     }
 
@@ -162,7 +165,6 @@ contract OMOEthereumUniswapAggregator is Ownable {
         for (uint i; i < path.length - 1; i++) {
             (address input, address output) = (path[i], path[i + 1]);
             (address token0,) = EthereumUniswapV2Library.sortTokens(input, output);
-            require(IUniswapV2Factory(factory).getPair(input, output) != address(0), "OMOAggregator: PAIR_NOT_EXIST");
             IUniswapV2Pair pair = IUniswapV2Pair(EthereumUniswapV2Library.pairFor(factory, input, output));
             uint amountInput;
             uint amountOutput;
@@ -207,9 +209,5 @@ contract OMOEthereumUniswapAggregator is Ownable {
             _sendETH(msg.sender, address(this).balance);
         }
         token.safeTransfer(msg.sender, token.balanceOf(address(this)));
-    }
-
-    function addressToBytes32(address addr) internal pure returns (bytes32) {
-        return bytes32(uint256(uint160(addr)));
     }
 }
