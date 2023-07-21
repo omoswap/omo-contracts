@@ -72,7 +72,7 @@ contract OMOEthereumUniswapAggregator is Ownable {
 
     function swapExactTokensForTokensSupportingFeeOnTransferTokensCrossChain(
         uint amountIn, uint amountOutMin, address[] calldata path,         // args for dex
-        uint32 destinationDomain, bytes32 recipient, bytes memory callData // args for wrapper
+        uint32 destinationDomain, bytes32 recipient, bytes memory callData // args for bridge
     ) external payable {
         uint amountOut = _swapExactTokensForTokensSupportingFeeOnTransferTokens(amountIn, amountOutMin, path);
         uint feeAmount = amountOut * aggregatorFee / FEE_DENOMINATOR;
@@ -118,7 +118,7 @@ contract OMOEthereumUniswapAggregator is Ownable {
 
     function swapExactETHForTokensSupportingFeeOnTransferTokensCrossChain(
         uint amountOutMin, address[] calldata path, uint netFee,            // args for dex
-        uint32 destinationDomain, bytes32 recipient, bytes memory callData  // args for wrapper
+        uint32 destinationDomain, bytes32 recipient, bytes memory callData  // args for bridge
     ) external payable {
         uint amountOut = _swapExactETHForTokensSupportingFeeOnTransferTokens(amountOutMin, path, netFee);
         uint feeAmount = amountOut * aggregatorFee / FEE_DENOMINATOR;
