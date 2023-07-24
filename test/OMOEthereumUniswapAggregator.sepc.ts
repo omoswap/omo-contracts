@@ -161,7 +161,7 @@ describe("OMOEthereumUniswapAggregator", function () {
                     10,
                     [tokenA.address, tokenB.address, tokenC.address],
                     1,
-                    user.address,
+                    addressToBytes32(user.address.toLowerCase()),
                     zeroAddress
                 )
             )
@@ -251,7 +251,7 @@ describe("OMOEthereumUniswapAggregator", function () {
                     [WETH.address, ...path],
                     1,
                     100,
-                    user.address,
+                    addressToBytes32(user.address.toLowerCase()),
                     zeroAddress,
                     {
                         value: 5,
@@ -284,7 +284,7 @@ describe("OMOEthereumUniswapAggregator", function () {
                     [WETH.address, tokenA.address, tokenB.address, tokenC.address],
                     1,
                     1,
-                    user.address,
+                    addressToBytes32(user.address.toLowerCase()),
                     zeroAddress,
                     {
                         value: 6,
