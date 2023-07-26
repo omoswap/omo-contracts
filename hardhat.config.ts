@@ -42,6 +42,13 @@ const config: HardhatUserConfig = {
       gas: "auto",
       gasPrice: "auto",
     },
+    [chain.OptimismGoerli]: {
+      chainId: 420,
+      url: "https://endpoints.omniatech.io/v1/op/goerli/public",
+      accounts: [privateKey],
+      gas: "auto",
+      gasPrice: "auto",
+    },
   },
 };
 

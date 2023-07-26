@@ -28,4 +28,5 @@ export const enum chain {
     EthereumGoerli = 'EthereumGoerli',
     AvalancheTestNet = 'AvalancheTestNet',
     ArbitrumGoerli = 'ArbitrumGoerli',
+    OptimismGoerli = 'OptimismGoerli'
 }
