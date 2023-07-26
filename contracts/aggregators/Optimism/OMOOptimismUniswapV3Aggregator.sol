@@ -38,6 +38,11 @@ contract OMOOptimismUniswapV3Aggregator is Ownable {
         IUniswapV3SwapRouter.ExactInputSingleParams memory params,
         bool unwrapETH
     ) external payable {
+        if (params.amountIn == 0) {
+            require(msg.sender == IBridge(bridge).callProxy(), "invalid caller");
+            params.amountIn = IERC20(params.tokenIn).allowance(msg.sender, address(this));
+        }
+
         _pull(params.tokenIn, params.amountIn, 0);
 
         (uint amountOut, uint feeAmount, address receiver) = _swap(params, msg.value > 0, unwrapETH, params.recipient);
