@@ -35,6 +35,13 @@ const config: HardhatUserConfig = {
       gas: "auto",
       gasPrice: "auto",
     },
+    [chain.ArbitrumGoerli]: {
+      chainId: 421613,
+      url: "https://endpoints.omniatech.io/v1/arbitrum/goerli/public",
+      accounts: [privateKey],
+      gas: "auto",
+      gasPrice: "auto",
+    },
   },
 };
 
