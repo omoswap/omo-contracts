@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.17;
 
-import "./Utils.sol";
+import "./libraries/Utils.sol";
 import "./roles/Attestable.sol";
 import "./interfaces/IBridge.sol";
 import "./interfaces/IReceiver.sol";
