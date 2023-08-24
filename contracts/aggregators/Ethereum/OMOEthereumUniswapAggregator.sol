@@ -25,7 +25,7 @@ contract OMOEthereumUniswapAggregator is Ownable {
 
     address public WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address public factory = 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f;
-    address public bridge = 0x0000000000000000000000000000000000000000;
+    address public bridge = 0xa39628ee6Ca80eb2D93f21Def75A7B4D03b82e1E;
     address public feeCollector;
 
     uint256 public aggregatorFee = 3 * 10 ** 7;
