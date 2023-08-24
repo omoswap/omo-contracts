@@ -21,6 +21,26 @@ const config: HardhatUserConfig = {
     ],
   },
   networks: {
+    [chain.Ethereum]: {
+      chainId: 1,
+      accounts: [privateKey],
+      url: "https://ethereum.publicnode.com",
+    },
+    [chain.Arbitrum]: {
+      chainId: 42161,
+      accounts: [privateKey],
+      url: "https://endpoints.omniatech.io/v1/arbitrum/one/public",
+    },
+    [chain.Avalanche]: {
+      chainId: 43114,
+      accounts: [privateKey],
+      url: "https://endpoints.omniatech.io/v1/avax/mainnet/public",
+    },
+    [chain.Optimism]: {
+      chainId: 10,
+      accounts: [privateKey],
+      url: "https://endpoints.omniatech.io/v1/op/mainnet/public",
+    },
     [chain.EthereumGoerli]: {
       chainId: 5,
       url: "https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
