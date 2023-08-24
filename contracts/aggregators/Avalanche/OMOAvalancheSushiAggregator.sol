@@ -25,7 +25,7 @@ contract OMOAvalancheSushiAggregator is Ownable {
 
     address public WETH = 0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7;
     address public factory = 0xc35DADB65012eC5796536bD9864eD8773aBc74C4;
-    address public bridge = 0x0000000000000000000000000000000000000000;
+    address public bridge = 0xa39628ee6Ca80eb2D93f21Def75A7B4D03b82e1E;
     address public feeCollector;
 
     uint256 public aggregatorFee = 3 * 10 ** 7;
