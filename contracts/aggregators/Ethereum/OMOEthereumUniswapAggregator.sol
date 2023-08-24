@@ -124,7 +124,7 @@ contract OMOEthereumUniswapAggregator is Ownable {
         uint feeAmount = amountOut * aggregatorFee / FEE_DENOMINATOR;
         address bridgeToken = path[path.length-1];
         IERC20(bridgeToken).safeTransfer(feeCollector, feeAmount);
-        emit LOG_AGG_SWAP(msg.sender, msg.value, address(0), amountOut, bridgeToken, msg.sender, feeAmount);
+        emit LOG_AGG_SWAP(msg.sender, msg.value-netFee, address(0), amountOut, bridgeToken, msg.sender, feeAmount);
 
         uint bridgeAmount = amountOut - feeAmount;
 
