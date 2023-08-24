@@ -124,7 +124,7 @@ contract OMOAvalancheSushiAggregator is Ownable {
         uint feeAmount = amountOut * aggregatorFee / FEE_DENOMINATOR;
         address bridgeToken = path[path.length-1];
         IERC20(bridgeToken).safeTransfer(feeCollector, feeAmount);
-        emit LOG_AGG_SWAP(msg.sender, msg.value, address(0), amountOut, bridgeToken, msg.sender, feeAmount);
+        emit LOG_AGG_SWAP(msg.sender, msg.value-netFee, address(0), amountOut, bridgeToken, msg.sender, feeAmount);
 
         uint bridgeAmount = amountOut - feeAmount;
 
@@ -154,11 +154,6 @@ contract OMOAvalancheSushiAggregator is Ownable {
         return amountOut;
     }
 
-    function _sendETH(address to, uint256 amount) internal {
-        (bool success,) = to.call{value:amount}(new bytes(0));
-        require(success, 'OMOAggregator: ETH_TRANSFER_FAILED');
-    }
-
     // **** SWAP (supporting fee-on-transfer tokens) ****
     // requires the initial amount to have already been sent to the first pair
     function _swapSupportingFeeOnTransferTokens(address[] memory path, address _to) internal {
@@ -178,6 +173,11 @@ contract OMOAvalancheSushiAggregator is Ownable {
             address to = i < path.length - 2 ? AvalancheSushiLibrary.pairFor(factory, output, path[i + 2]) : _to;
             pair.swap(amount0Out, amount1Out, to, new bytes(0));
         }
+    }
+
+    function _sendETH(address to, uint256 amount) internal {
+        (bool success,) = to.call{value:amount}(new bytes(0));
+        require(success, 'OMOAggregator: ETH_TRANSFER_FAILED');
     }
 
     function setWETH(address _weth) external onlyOwner {
