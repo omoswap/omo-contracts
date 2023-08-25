@@ -24,7 +24,7 @@ contract OMOOptimismUniswapV3Aggregator is Ownable {
 
     address public WETH = 0x4200000000000000000000000000000000000006;
     address public router = 0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45;
-    address public bridge = 0x0000000000000000000000000000000000000000;
+    address public bridge = 0x96e8Cf990545c5853ac8DeF324C72fB0E5759019;
     address public feeCollector;
 
     constructor (address _feeCollector) {
