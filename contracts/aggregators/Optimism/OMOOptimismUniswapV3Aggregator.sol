@@ -173,7 +173,7 @@ contract OMOOptimismUniswapV3Aggregator is Ownable {
     function decodeTokenInTokenOut(
         IUniswapV3SwapRouter.ExactInputParams memory params
     ) internal pure returns (address, address) {
-        require(params.path.length >= 63, 'toAddress_outOfBounds');
+        require(params.path.length >= 43, 'toAddress_outOfBounds');
         bytes memory _bytes = params.path;
 
         address tokenIn;
