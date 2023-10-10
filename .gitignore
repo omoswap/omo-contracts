@@ -17,6 +17,7 @@ typechain-types
 rsync.sh
 generate_abi.sh
 build
+note.md
 
 # VS Code workspace config
 workspace.code-workspace
