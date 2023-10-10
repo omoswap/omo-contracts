@@ -69,6 +69,13 @@ const config: HardhatUserConfig = {
       gas: "auto",
       gasPrice: "auto",
     },
+    [chain.BaseGoerli]: {
+      chainId: 84531,
+      url: "https://goerli.base.org",
+      accounts: [privateKey],
+      gas: "auto",
+      gasPrice: "auto",
+    },
   },
 };
 
