@@ -4,8 +4,6 @@ import { ethers } from "hardhat";
 import { deployAggregatorFixture } from "./utils/fixtures";
 import { addressToBytes32, getContractAccount, zeroAddress } from "./utils/utilities";
 
-// MockUniswapV2Pair code hash badcace35eca3975b86a7d744a198f996983b3f8f265644b0c0db50289070a24
-
 describe("OMOEthereumUniswapAggregator", function () {
     describe("TokenForTokens", function () {
         it("should revert if amountIn is zero and bridge unset", async function () {
