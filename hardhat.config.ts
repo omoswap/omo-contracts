@@ -41,6 +41,11 @@ const config: HardhatUserConfig = {
       accounts: [privateKey],
       url: "https://endpoints.omniatech.io/v1/op/mainnet/public",
     },
+    [chain.Base]: {
+      chainId: 8453,
+      accounts: [privateKey],
+      url: "https://mainnet.base.org",
+    },
     [chain.EthereumGoerli]: {
       chainId: 5,
       url: "https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",

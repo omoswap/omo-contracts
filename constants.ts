@@ -6,6 +6,7 @@ export const enum chainID {
     Gnosis = 100,
     Polygon = 137,
     Fantom = 250,
+    Base = 8453,
     Arbitrum = 42161,
     Avalanche = 43114,
 
@@ -23,6 +24,7 @@ export const enum chain {
     Fantom = "Fantom",
     Arbitrum = "Arbitrum",
     Avalanche = "Avalanche",
+    Base = "Base",
 
     // TestNets
     EthereumGoerli = 'EthereumGoerli',
