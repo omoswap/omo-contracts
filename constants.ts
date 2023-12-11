@@ -1,4 +1,4 @@
-export const enum chainID {
+export enum chainID {
     // MainNets
     Ethereum = 1,
     Optimism = 10,
