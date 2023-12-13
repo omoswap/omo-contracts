@@ -40,7 +40,7 @@ contract OMOBaseAerodromeAggregator is Ownable {
 
     function swapExactTokensForTokens(
         uint amountIn, uint amountOutMin,
-        IAerodromeRouter.route[] calldata routes,
+        IAerodromeRouter.Route[] calldata routes,
         address receiver, bool unwrapETH
     ) external {
         if (amountIn == 0) {
@@ -67,7 +67,7 @@ contract OMOBaseAerodromeAggregator is Ownable {
     }
 
     function swapExactTokensForTokensCrossChain(
-        uint amountIn, uint amountOutMin, IAerodromeRouter.route[] calldata routes, // args for dex
+        uint amountIn, uint amountOutMin, IAerodromeRouter.Route[] calldata routes, // args for dex
         uint32 destinationDomain, bytes32 recipient, bytes calldata callData // args for bridge
     ) external payable {
         IERC20(routes[0].from).safeTransferFrom(msg.sender, address(this), amountIn);
@@ -83,7 +83,7 @@ contract OMOBaseAerodromeAggregator is Ownable {
 
     function swapExactETHForTokens(
         uint amountOutMin,
-        IAerodromeRouter.route[] calldata routes,
+        IAerodromeRouter.Route[] calldata routes,
         address receiver
     ) external payable {
         uint amountOutCharged = _swapExactETHForTokens(
@@ -95,7 +95,7 @@ contract OMOBaseAerodromeAggregator is Ownable {
     }
 
     function swapExactETHForTokensCrossChain(
-        uint amountOutMin, IAerodromeRouter.route[] calldata routes, uint netFee, // args for dex
+        uint amountOutMin, IAerodromeRouter.Route[] calldata routes, uint netFee, // args for dex
         uint32 destinationDomain, bytes32 recipient, bytes calldata callData // args for bridge
     ) external payable {
         uint bridgeAmount = _swapExactETHForTokens(
@@ -109,7 +109,7 @@ contract OMOBaseAerodromeAggregator is Ownable {
 
     function _swapExactTokensForTokens(
         uint amountIn, uint amountOutMin,
-        IAerodromeRouter.route[] calldata routes,
+        IAerodromeRouter.Route[] calldata routes,
         bool nativeIn, bool nativeOut, address logReceiver
     ) internal returns (uint) {
         address tokenIn = routes[0].from;
@@ -118,7 +118,7 @@ contract OMOBaseAerodromeAggregator is Ownable {
         IERC20(tokenIn).safeApprove(router, amountIn);
 
         uint balanceBefore = IERC20(tokenOut).balanceOf(address(this));
-        IAerodromeRouter(router).swapExactTokensForTokens(
+        IAerodromeRouter(router).swapExactTokensForTokensSupportingFeeOnTransferTokens(
             amountIn, amountOutMin, routes, address(this), block.timestamp
         );
         uint amountOut = IERC20(tokenOut).balanceOf(address(this)) - balanceBefore;
@@ -131,7 +131,7 @@ contract OMOBaseAerodromeAggregator is Ownable {
 
     function _swapExactETHForTokens(
         uint amountOutMin,
-        IAerodromeRouter.route[] calldata routes,
+        IAerodromeRouter.Route[] calldata routes,
         uint netFee, address logReceiver
     ) internal returns (uint) {
         require(msg.value > netFee, "OMOAggregator: INVALID_MSG_VALUE");
