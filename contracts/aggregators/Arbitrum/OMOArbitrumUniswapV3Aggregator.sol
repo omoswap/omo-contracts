@@ -27,6 +27,10 @@ contract OMOArbitrumUniswapV3Aggregator is Ownable {
     address public bridge = 0xa39628ee6Ca80eb2D93f21Def75A7B4D03b82e1E;
     address public feeCollector;
 
+    uint256 public aggregatorFee = 3 * 10 ** 7;
+    uint256 public constant FEE_DENOMINATOR = 10 ** 10;
+    uint256 private constant MAX_AGGREGATOR_FEE = 5 * 10**8;
+
     constructor (address _feeCollector) {
         require(_feeCollector != address(0), "feeCollector address cannot be zero");
         feeCollector = _feeCollector;
@@ -34,46 +38,50 @@ contract OMOArbitrumUniswapV3Aggregator is Ownable {
 
     receive() external payable { }
 
-    function exactInputSingle(
-        IUniswapV3SwapRouter.ExactInputSingleParams memory params,
+    function exactInput(
+        IUniswapV3SwapRouter.ExactInputParams memory params,
         bool unwrapETH
     ) external payable {
+        (address tokenIn, address tokenOut) = decodeTokenInTokenOut(params);
+
         if (params.amountIn == 0) {
             require(msg.sender == IBridge(bridge).callProxy(), "invalid caller");
-            params.amountIn = IERC20(params.tokenIn).allowance(msg.sender, address(this));
+            params.amountIn = IERC20(tokenIn).allowance(msg.sender, address(this));
         }
 
-        _pull(params.tokenIn, params.amountIn, 0);
+        _pull(tokenIn, params.amountIn, 0);
 
         (uint amountOut, uint feeAmount, address receiver) = _swap(params, msg.value > 0, unwrapETH, params.recipient);
 
         if (unwrapETH) {
-            require(params.tokenOut == WETH, 'OMOAggregator: INVALID_TOKEN_OUT');
+            require(tokenOut == WETH, 'OMOAggregator: INVALID_TOKEN_OUT');
 
             IWETH(WETH).withdraw(amountOut);
 
             _sendETH(receiver, amountOut - feeAmount);
             _sendETH(feeCollector, feeAmount);
         } else {
-            IERC20(params.tokenOut).safeTransfer(receiver, amountOut - feeAmount);
-            IERC20(params.tokenOut).safeTransfer(feeCollector, feeAmount);
+            IERC20(tokenOut).safeTransfer(receiver, amountOut - feeAmount);
+            IERC20(tokenOut).safeTransfer(feeCollector, feeAmount);
         }
     }
 
-    function exactInputSingleCrossChain(
-        IUniswapV3SwapRouter.ExactInputSingleParams memory params,
-        uint netFee, uint32 destinationDomain, bytes32 recipient, bytes memory callData // args for bridge
+    function exactInputCrossChain(
+        IUniswapV3SwapRouter.ExactInputParams calldata params,
+        uint netFee, uint32 destinationDomain, bytes32 recipient, bytes calldata callData // args for bridge
     ) external payable {
-        _pull(params.tokenIn, params.amountIn, netFee);
+        (address tokenIn, address tokenOut) = decodeTokenInTokenOut(params);
+
+        _pull(tokenIn, params.amountIn, netFee);
 
         (uint amountOut, uint feeAmount, ) = _swap(params, msg.value > netFee, false, msg.sender);
-        IERC20(params.tokenOut).safeTransfer(feeCollector, feeAmount);
+        IERC20(tokenOut).safeTransfer(feeCollector, feeAmount);
         uint bridgeAmount = amountOut - feeAmount;
 
-        IERC20(params.tokenOut).safeApprove(bridge, bridgeAmount);
+        IERC20(tokenOut).safeApprove(bridge, bridgeAmount);
 
         IBridge(bridge).bridgeOut{value: netFee}(
-            params.tokenOut,
+            tokenOut,
             bridgeAmount,
             destinationDomain,
             recipient,
@@ -94,23 +102,23 @@ contract OMOArbitrumUniswapV3Aggregator is Ownable {
     }
 
     function _swap(
-        IUniswapV3SwapRouter.ExactInputSingleParams memory params,
+        IUniswapV3SwapRouter.ExactInputParams memory params,
         bool nativeIn, bool nativeOut, address logReceiver
     ) internal returns (uint, uint, address) {
         require(params.recipient != address(0), 'OMOAggregator: INVALID_RECIPIENT');
         address receiver = params.recipient;
         params.recipient = address(this);
 
-        IERC20(params.tokenIn).safeApprove(router, params.amountIn);
+        (address tokenIn, address tokenOut) = decodeTokenInTokenOut(params);
 
-        uint balanceBefore = IERC20(params.tokenOut).balanceOf(address(this));
-        IUniswapV3SwapRouter(router).exactInputSingle(params);
-        uint amountOut = IERC20(params.tokenOut).balanceOf(address(this)) - balanceBefore;
-        uint feeAmount = amountOut * params.fee / 1000000;
+        IERC20(tokenIn).safeApprove(router, params.amountIn);
 
-        address tokenIn = params.tokenIn;
+        uint balanceBefore = IERC20(tokenOut).balanceOf(address(this));
+        IUniswapV3SwapRouter(router).exactInput(params);
+        uint amountOut = IERC20(tokenOut).balanceOf(address(this)) - balanceBefore;
+        uint feeAmount = amountOut * aggregatorFee / FEE_DENOMINATOR;
+
         if (nativeIn) tokenIn = address(0);
-        address tokenOut = params.tokenOut;
         if (nativeOut) tokenOut = address(0);
 
         emit LOG_AGG_SWAP(
@@ -149,11 +157,36 @@ contract OMOArbitrumUniswapV3Aggregator is Ownable {
         feeCollector = _feeCollector;
     }
 
+    function setAggregatorFee(uint _fee) external onlyOwner {
+        require(_fee < MAX_AGGREGATOR_FEE, "aggregator fee exceeds maximum");
+        aggregatorFee = _fee;
+    }
+
     function rescueFund(address tokenAddress) external onlyOwner {
         IERC20 token = IERC20(tokenAddress);
         if (tokenAddress == WETH && address(this).balance > 0) {
             _sendETH(msg.sender, address(this).balance);
         }
         token.safeTransfer(msg.sender, token.balanceOf(address(this)));
+    }
+
+    function decodeTokenInTokenOut(
+        IUniswapV3SwapRouter.ExactInputParams memory params
+    ) internal pure returns (address, address) {
+        require(params.path.length >= 43, 'toAddress_outOfBounds');
+        bytes memory _bytes = params.path;
+
+        address tokenIn;
+        assembly {
+            tokenIn := div(mload(add(add(_bytes, 0x20), 0)), 0x1000000000000000000000000)
+        }
+
+        address tokenOut;
+        uint offset = _bytes.length-20;
+        assembly {
+            tokenOut := div(mload(add(add(_bytes, 0x20), offset)), 0x1000000000000000000000000)
+        }
+
+        return (tokenIn, tokenOut);
     }
 }
