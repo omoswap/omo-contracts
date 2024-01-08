@@ -67,7 +67,7 @@ contract OMOAvalancheCurveAggregator is Ownable {
 
     function exchangeTokensForTokensCrossChain(
         uint256 amountIn, address pool, uint256 minDy, address[] calldata path,
-        uint32 destinationDomain, bytes32 recipient, bytes memory callData
+        uint32 destinationDomain, bytes32 recipient, bytes calldata callData
     ) external virtual payable {
         IERC20(path[0]).safeTransferFrom(_msgSender(), address(this), amountIn);
 
@@ -99,7 +99,7 @@ contract OMOAvalancheCurveAggregator is Ownable {
 
     function exchangeETHForTokensCrossChain(
         address pool, uint256 minDy, address[] calldata path,
-        uint256 netFee, uint32 destinationDomain, bytes32 recipient, bytes memory callData
+        uint256 netFee, uint32 destinationDomain, bytes32 recipient, bytes calldata callData
     ) external payable {
         uint256 amountIn = msg.value - netFee;
         IWETH(WETH).deposit{value: amountIn}();
