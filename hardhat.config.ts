@@ -46,28 +46,18 @@ const config: HardhatUserConfig = {
     },
     [chain.EthereumGoerli]: {
       url: "https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
-      gas: "auto",
-      gasPrice: "auto",
     },
     [chain.AvalancheTestNet]: {
       url: "https://avalanche-fuji-c-chain.publicnode.com",
-      gas: "auto",
-      gasPrice: "auto",
     },
     [chain.ArbitrumGoerli]: {
       url: "https://endpoints.omniatech.io/v1/arbitrum/goerli/public",
-      gas: "auto",
-      gasPrice: "auto",
     },
     [chain.OptimismGoerli]: {
       url: "https://endpoints.omniatech.io/v1/op/goerli/public",
-      gas: "auto",
-      gasPrice: "auto",
     },
     [chain.BaseGoerli]: {
       url: "https://goerli.base.org",
-      gas: "auto",
-      gasPrice: "auto",
     },
   },
 };
