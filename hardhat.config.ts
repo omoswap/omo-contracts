@@ -3,6 +3,7 @@ import "@nomiclabs/hardhat-ethers";
 import { HardhatUserConfig } from "hardhat/config";
 import { existsSync, readFileSync } from 'fs';
 import { chain, chainID } from "./constants";
+const { vars } = require("hardhat/config");
 
 const privKeyFile = '.private_key'
 let privateKey = '';
@@ -27,39 +28,61 @@ const config: HardhatUserConfig = {
   },
   networks: {
     [chain.Ethereum]: {
-      url: "https://ethereum.publicnode.com",
+      url: vars.get("ETHEREUM_RPC_URL"),
     },
     [chain.Arbitrum]: {
-      url: "https://endpoints.omniatech.io/v1/arbitrum/one/public",
+      url: vars.get("ARBITRUM_RPC_URL"),
     },
     [chain.Avalanche]: {
-      url: "https://endpoints.omniatech.io/v1/avax/mainnet/public",
+      url: vars.get("AVALANCHE_RPC_URL"),
     },
     [chain.Optimism]: {
-      url: "https://endpoints.omniatech.io/v1/op/mainnet/public",
+      url: vars.get("OPTIMISM_RPC_URL"),
     },
     [chain.Base]: {
-      url: "https://mainnet.base.org",
+      url: vars.get("BASE_RPC_URL"),
     },
     [chain.Polygon]: {
-      url: "https://rpc-mainnet.maticvigil.com",
+      url: vars.get("POLYGON_RPC_URL"),
     },
     [chain.EthereumGoerli]: {
-      url: "https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
+      url: vars.get("ETHEREUM_GOERLI_RPC_URL"),
     },
     [chain.AvalancheTestNet]: {
-      url: "https://avalanche-fuji-c-chain.publicnode.com",
+      url: vars.get("AVALANCHE_TESTNET_RPC_URL"),
     },
     [chain.ArbitrumGoerli]: {
-      url: "https://endpoints.omniatech.io/v1/arbitrum/goerli/public",
+      url: vars.get("ARBITRUM_GOERLI_RPC_URL"),
     },
     [chain.OptimismGoerli]: {
-      url: "https://endpoints.omniatech.io/v1/op/goerli/public",
+      url: vars.get("OPTIMISM_GOERLI_RPC_URL"),
     },
     [chain.BaseGoerli]: {
-      url: "https://goerli.base.org",
+      url: vars.get("BASE_GOERLI_RPC_URL"),
     },
   },
+
+  etherscan: {
+    apiKey: {
+      mainnet: vars.get("ETHEREUM_API_KEY"),
+      arbitrumOne: vars.get("ARBITRUM_API_KEY"),
+      avalanche: vars.get("AVALANCHE_API_KEY"),
+      optimisticEthereum: vars.get("OPTIMISM_API_KEY"),
+      Base: vars.get("BASE_API_KEY"),
+      polygon: vars.get("POLYGON_API_KEY"),
+    },
+    customChains: [
+      {
+        network: "Base",
+        chainId: 8453,
+        urls: {
+          apiURL: "https://api.basescan.org/api",
+          browserURL: "https://basescan.org"
+        },
+      }
+    ]
+  },
+
 };
 
 for (var net in config.networks) {
