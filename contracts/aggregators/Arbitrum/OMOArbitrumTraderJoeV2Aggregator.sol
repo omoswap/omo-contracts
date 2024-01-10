@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import "../../access/Ownable.sol";
 import "../../interfaces/IBridge.sol";
 import "../../assets/interfaces/IWETH.sol";
-import "./interfaces/IArbitrumLBRouter.sol";
+import "../interfaces/ILBRouter.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -41,7 +41,7 @@ contract OMOArbitrumTraderJoeV2Aggregator is Ownable {
 
     function swapExactTokensForTokensSupportingFeeOnTransferTokens(
         uint amountIn, uint amountOutMin,
-        IArbitrumLBRouter.Path calldata path,
+        ILBRouter.Path calldata path,
         address receiver, bool unwrapETH
     ) external {
         if (amountIn == 0) {
@@ -68,7 +68,7 @@ contract OMOArbitrumTraderJoeV2Aggregator is Ownable {
     }
 
     function swapExactTokensForTokensSupportingFeeOnTransferTokensCrossChain(
-        uint amountIn, uint amountOutMin, IArbitrumLBRouter.Path calldata path, // args for dex
+        uint amountIn, uint amountOutMin, ILBRouter.Path calldata path, // args for dex
         uint32 destinationDomain, bytes32 recipient, bytes calldata callData // args for bridge
     ) external payable {
         path.tokenPath[0].safeTransferFrom(msg.sender, address(this), amountIn);
@@ -84,7 +84,7 @@ contract OMOArbitrumTraderJoeV2Aggregator is Ownable {
 
     function swapExactETHForTokensSupportingFeeOnTransferTokens(
         uint amountOutMin,
-        IArbitrumLBRouter.Path calldata path,
+        ILBRouter.Path calldata path,
         address receiver
     ) external payable {
         uint amountOutCharged = _swapExactETHForTokensSupportingFeeOnTransferTokens(
@@ -96,7 +96,7 @@ contract OMOArbitrumTraderJoeV2Aggregator is Ownable {
     }
 
     function swapExactETHForTokensSupportingFeeOnTransferTokensCrossChain(
-        uint amountOutMin, IArbitrumLBRouter.Path calldata path, uint netFee, // args for dex
+        uint amountOutMin, ILBRouter.Path calldata path, uint netFee, // args for dex
         uint32 destinationDomain, bytes32 recipient, bytes calldata callData // args for bridge
     ) external payable {
         uint bridgeAmount = _swapExactETHForTokensSupportingFeeOnTransferTokens(
@@ -110,7 +110,7 @@ contract OMOArbitrumTraderJoeV2Aggregator is Ownable {
 
     function _swapExactTokensForTokensSupportingFeeOnTransferTokens(
         uint amountIn, uint amountOutMin,
-        IArbitrumLBRouter.Path calldata path,
+        ILBRouter.Path calldata path,
         bool nativeIn, bool nativeOut, address logReceiver
     ) internal returns (uint) {
         address tokenIn = address(path.tokenPath[0]);
@@ -119,7 +119,7 @@ contract OMOArbitrumTraderJoeV2Aggregator is Ownable {
         IERC20(tokenIn).safeApprove(router, amountIn);
 
         uint balanceBefore = IERC20(tokenOut).balanceOf(address(this));
-        IArbitrumLBRouter(router).swapExactTokensForTokensSupportingFeeOnTransferTokens(
+        ILBRouter(router).swapExactTokensForTokensSupportingFeeOnTransferTokens(
             amountIn, amountOutMin, path, address(this), block.timestamp+1
         );
         uint amountOut = IERC20(tokenOut).balanceOf(address(this)) - balanceBefore;
@@ -132,7 +132,7 @@ contract OMOArbitrumTraderJoeV2Aggregator is Ownable {
 
     function _swapExactETHForTokensSupportingFeeOnTransferTokens(
         uint amountOutMin,
-        IArbitrumLBRouter.Path calldata path,
+        ILBRouter.Path calldata path,
         uint netFee, address logReceiver
     ) internal returns (uint) {
         require(msg.value > netFee, "OMOAggregator: INVALID_MSG_VALUE");

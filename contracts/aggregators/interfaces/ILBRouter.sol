@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
  * @author Trader Joe
  * @notice Required interface of LBRouter contract
  */
-interface IArbitrumLBRouter {
+interface ILBRouter {
 
     /**
      * @dev This enum represents the version of the pair requested
