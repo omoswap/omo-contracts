@@ -10,6 +10,7 @@ let privateKey = '';
 
 if (existsSync(privKeyFile)) {
   privateKey = readFileSync(privKeyFile, "utf-8");
+  privateKey = privateKey.replace(/\s/g, "");
 }
 
 const config: HardhatUserConfig = {
