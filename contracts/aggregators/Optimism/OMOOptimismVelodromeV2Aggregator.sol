@@ -5,11 +5,11 @@ pragma solidity ^0.8.0;
 import "../../access/Ownable.sol";
 import "../../interfaces/IBridge.sol";
 import "../../assets/interfaces/IWETH.sol";
-import "../interfaces/IAerodromeRouter.sol";
+import "../interfaces/IVelodromeV2Router.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-contract OMOBaseAerodromeAggregator is Ownable {
+contract OMOOptimismVelodromeV2Aggregator is Ownable {
     using SafeERC20 for IERC20;
 
     event LOG_AGG_SWAP (
@@ -23,7 +23,7 @@ contract OMOBaseAerodromeAggregator is Ownable {
     );
 
     address public WETH = 0x4200000000000000000000000000000000000006;
-    address public router = 0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43;
+    address public router = 0xa062aE8A9c5e11aaA026fc2670B0D65cCc8B2858;
     address public bridge = 0x96e8Cf990545c5853ac8DeF324C72fB0E5759019;
     address public feeCollector;
 
@@ -40,7 +40,7 @@ contract OMOBaseAerodromeAggregator is Ownable {
 
     function swapExactTokensForTokensSupportingFeeOnTransferTokens(
         uint amountIn, uint amountOutMin,
-        IAerodromeRouter.Route[] calldata routes,
+        IVelodromeV2Router.Route[] calldata routes,
         address receiver, bool unwrapETH
     ) external {
         if (amountIn == 0) {
@@ -67,7 +67,7 @@ contract OMOBaseAerodromeAggregator is Ownable {
     }
 
     function swapExactTokensForTokensSupportingFeeOnTransferTokensCrossChain(
-        uint amountIn, uint amountOutMin, IAerodromeRouter.Route[] calldata routes, // args for dex
+        uint amountIn, uint amountOutMin, IVelodromeV2Router.Route[] calldata routes, // args for dex
         uint32 destinationDomain, bytes32 recipient, bytes calldata callData // args for bridge
     ) external payable {
         IERC20(routes[0].from).safeTransferFrom(msg.sender, address(this), amountIn);
@@ -83,7 +83,7 @@ contract OMOBaseAerodromeAggregator is Ownable {
 
     function swapExactETHForTokensSupportingFeeOnTransferTokens(
         uint amountOutMin,
-        IAerodromeRouter.Route[] calldata routes,
+        IVelodromeV2Router.Route[] calldata routes,
         address receiver
     ) external payable {
         uint amountOutCharged = _swapExactETHForTokensSupportingFeeOnTransferTokens(
@@ -95,7 +95,7 @@ contract OMOBaseAerodromeAggregator is Ownable {
     }
 
     function swapExactETHForTokensSupportingFeeOnTransferTokensCrossChain(
-        uint amountOutMin, IAerodromeRouter.Route[] calldata routes, uint netFee, // args for dex
+        uint amountOutMin, IVelodromeV2Router.Route[] calldata routes, uint netFee, // args for dex
         uint32 destinationDomain, bytes32 recipient, bytes calldata callData // args for bridge
     ) external payable {
         uint bridgeAmount = _swapExactETHForTokensSupportingFeeOnTransferTokens(
@@ -109,7 +109,7 @@ contract OMOBaseAerodromeAggregator is Ownable {
 
     function _swapExactTokensForTokensSupportingFeeOnTransferTokens(
         uint amountIn, uint amountOutMin,
-        IAerodromeRouter.Route[] calldata routes,
+        IVelodromeV2Router.Route[] calldata routes,
         bool nativeIn, bool nativeOut, address logReceiver
     ) internal returns (uint) {
         address tokenIn = routes[0].from;
@@ -118,7 +118,7 @@ contract OMOBaseAerodromeAggregator is Ownable {
         IERC20(tokenIn).safeApprove(router, amountIn);
 
         uint balanceBefore = IERC20(tokenOut).balanceOf(address(this));
-        IAerodromeRouter(router).swapExactTokensForTokensSupportingFeeOnTransferTokens(
+        IVelodromeV2Router(router).swapExactTokensForTokensSupportingFeeOnTransferTokens(
             amountIn, amountOutMin, routes, address(this), block.timestamp+1
         );
         uint amountOut = IERC20(tokenOut).balanceOf(address(this)) - balanceBefore;
@@ -131,7 +131,7 @@ contract OMOBaseAerodromeAggregator is Ownable {
 
     function _swapExactETHForTokensSupportingFeeOnTransferTokens(
         uint amountOutMin,
-        IAerodromeRouter.Route[] calldata routes,
+        IVelodromeV2Router.Route[] calldata routes,
         uint netFee, address logReceiver
     ) internal returns (uint) {
         require(msg.value > netFee, "OMOAggregator: INVALID_MSG_VALUE");
