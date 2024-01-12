@@ -6,11 +6,11 @@ import "../../access/Ownable.sol";
 import "../../interfaces/IBridge.sol";
 import "../interfaces/IUniswapV2Pair.sol";
 import "../../assets/interfaces/IWETH.sol";
-import "./libraries/ArbitrumSushiLibrary.sol";
+import "./libraries/EthereumSushiLibrary.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-contract OMOArbitrumSushiAggregator is Ownable {
+contract OMOEthereumSushiAggregator is Ownable {
     using SafeERC20 for IERC20;
 
     event LOG_AGG_SWAP (
@@ -23,8 +23,8 @@ contract OMOArbitrumSushiAggregator is Ownable {
         uint256 fee
     );
 
-    address public WETH = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1;
-    address public factory = 0xc35DADB65012eC5796536bD9864eD8773aBc74C4;
+    address public WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    address public factory = 0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac;
     address public bridge = 0xa39628ee6Ca80eb2D93f21Def75A7B4D03b82e1E;
     address public feeCollector;
 
@@ -93,7 +93,7 @@ contract OMOArbitrumSushiAggregator is Ownable {
         uint amountIn, uint amountOutMin, address[] calldata path
     ) internal returns (uint) {
         IERC20(path[0]).safeTransferFrom(
-            msg.sender, ArbitrumSushiLibrary.pairFor(factory, path[0], path[1]), amountIn
+            msg.sender, EthereumSushiLibrary.pairFor(factory, path[0], path[1]), amountIn
         );
 
         uint balanceBefore = IERC20(path[path.length - 1]).balanceOf(address(this));
@@ -144,7 +144,7 @@ contract OMOArbitrumSushiAggregator is Ownable {
         require(amountIn > 0, 'OMOAggregator: INSUFFICIENT_INPUT_AMOUNT');
 
         IWETH(WETH).deposit{value: amountIn}();
-        assert(IWETH(WETH).transfer(ArbitrumSushiLibrary.pairFor(factory, path[0], path[1]), amountIn));
+        assert(IWETH(WETH).transfer(EthereumSushiLibrary.pairFor(factory, path[0], path[1]), amountIn));
 
         uint balanceBefore = IERC20(path[path.length - 1]).balanceOf(address(this));
         _swapSupportingFeeOnTransferTokens(path, address(this));
@@ -159,18 +159,18 @@ contract OMOArbitrumSushiAggregator is Ownable {
     function _swapSupportingFeeOnTransferTokens(address[] memory path, address _to) internal {
         for (uint i; i < path.length - 1; i++) {
             (address input, address output) = (path[i], path[i + 1]);
-            (address token0,) = ArbitrumSushiLibrary.sortTokens(input, output);
-            IUniswapV2Pair pair = IUniswapV2Pair(ArbitrumSushiLibrary.pairFor(factory, input, output));
+            (address token0,) = EthereumSushiLibrary.sortTokens(input, output);
+            IUniswapV2Pair pair = IUniswapV2Pair(EthereumSushiLibrary.pairFor(factory, input, output));
             uint amountInput;
             uint amountOutput;
             { // scope to avoid stack too deep errors
                 (uint reserve0, uint reserve1,) = pair.getReserves();
                 (uint reserveInput, uint reserveOutput) = input == token0 ? (reserve0, reserve1) : (reserve1, reserve0);
                 amountInput = IERC20(input).balanceOf(address(pair)) - reserveInput;
-                amountOutput = ArbitrumSushiLibrary.getAmountOut(amountInput, reserveInput, reserveOutput);
+                amountOutput = EthereumSushiLibrary.getAmountOut(amountInput, reserveInput, reserveOutput);
             }
             (uint amount0Out, uint amount1Out) = input == token0 ? (uint(0), amountOutput) : (amountOutput, uint(0));
-            address to = i < path.length - 2 ? ArbitrumSushiLibrary.pairFor(factory, output, path[i + 2]) : _to;
+            address to = i < path.length - 2 ? EthereumSushiLibrary.pairFor(factory, output, path[i + 2]) : _to;
             pair.swap(amount0Out, amount1Out, to, new bytes(0));
         }
     }
