@@ -33,3 +33,7 @@ export enum chain {
     OptimismGoerli = 'OptimismGoerli',
     BaseGoerli = 'BaseGoerli',
 }
+
+export function isDefinedNetwork(net: string) {
+    return (<any>Object).values(chain).includes(net);
+}
