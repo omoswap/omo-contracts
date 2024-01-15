@@ -14,7 +14,7 @@ export enum chainID {
     EthereumGoerli = 5,
 }
 
-export const enum chain {
+export enum chain {
     // MainNets
     Ethereum = 'Ethereum',
     Optimism = "Optimism",

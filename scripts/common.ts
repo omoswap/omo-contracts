@@ -2,6 +2,7 @@ import * as hre from "hardhat";
 import { BigNumber } from "bignumber.js";
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import type { REPLServer } from "repl";
+import { chain } from "../constants";
 
 declare var global: any;
 let repl: REPLServer;
@@ -61,7 +62,16 @@ async function loadBaseUtils() {
     await loadVariables();
     await loadFunctions();
 
-    console.log(`current chain is ${hre.network.name}, chainID = ${hre.network.config.chainId}`);
+    let remoteChainID = (await hre.ethers.provider.getNetwork()).chainId;
+    if ((<any>Object).values(chain).includes(hre.network.name)) {
+        let localChainID = hre.network.config.chainId;
+        if (remoteChainID != localChainID) {
+            console.log(`local chainID ${localChainID} != remote chainID ${remoteChainID}`);
+            process.exit();
+        }
+    }
+
+    console.log(`current chain is ${hre.network.name}, chainID = ${remoteChainID}`);
 
     const { addr, balance } = await getGlobalAssetBalance();
     console.log(`current signer is ${addr}, native asset balance = ${balance}`);
