@@ -1,4 +1,8 @@
 {
+  "scripts": {
+    "test": "npx hardhat test",
+    "coverage": "npx hardhat coverage"
+  },
   "devDependencies": {
     "@defi-wonderland/smock": "^2.3.4",
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.4",
