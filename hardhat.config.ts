@@ -46,20 +46,20 @@ const config: HardhatUserConfig = {
     [chain.Polygon]: {
       url: vars.get("POLYGON_RPC_URL"),
     },
-    [chain.EthereumGoerli]: {
-      url: vars.get("ETHEREUM_GOERLI_RPC_URL"),
+    [chain.EthereumSepolia]: {
+      url: vars.get("ETHEREUM_SEPOLIA_RPC_URL"),
     },
     [chain.AvalancheTestNet]: {
       url: vars.get("AVALANCHE_TESTNET_RPC_URL"),
     },
-    [chain.ArbitrumGoerli]: {
-      url: vars.get("ARBITRUM_GOERLI_RPC_URL"),
+    [chain.ArbitrumSepolia]: {
+      url: vars.get("ARBITRUM_SEPOLIA_RPC_URL"),
     },
-    [chain.OptimismGoerli]: {
-      url: vars.get("OPTIMISM_GOERLI_RPC_URL"),
+    [chain.OptimismSepolia]: {
+      url: vars.get("OPTIMISM_SEPOLIA_RPC_URL"),
     },
-    [chain.BaseGoerli]: {
-      url: vars.get("BASE_GOERLI_RPC_URL"),
+    [chain.BaseSepolia]: {
+      url: vars.get("BASE_SEPOLIA_RPC_URL"),
     },
   },
 
