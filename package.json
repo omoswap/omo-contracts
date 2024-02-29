@@ -20,7 +20,7 @@
     "solidity-coverage": "^0.8.5"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^4.9.3",
+    "@openzeppelin/contracts": "^4.9.6",
     "ethers": "^5.7.1",
     "ts-node": "^10.9.1",
     "typechain": "^8.1.1",
