@@ -49,9 +49,12 @@ contract OMOBaseUniswapV3Aggregator is Ownable {
             params.amountIn = IERC20(tokenIn).allowance(msg.sender, address(this));
         }
 
+        uint256 balanceBefore = IERC20(tokenOut).balanceOf(address(this));
         _pull(tokenIn, params.amountIn, 0);
 
-        (uint amountOut, uint feeAmount, address receiver) = _swap(params, msg.value > 0, unwrapETH, params.recipient);
+        (uint amountOut, uint feeAmount, address receiver) = _swap(
+            params, msg.value > 0, unwrapETH, params.recipient, balanceBefore
+        );
 
         if (unwrapETH) {
             require(tokenOut == WETH, 'OMOAggregator: INVALID_TOKEN_OUT');
@@ -72,9 +75,12 @@ contract OMOBaseUniswapV3Aggregator is Ownable {
     ) external payable {
         (address tokenIn, address tokenOut) = decodeTokenInTokenOut(params);
 
+        uint256 balanceBefore = IERC20(tokenOut).balanceOf(address(this));
         _pull(tokenIn, params.amountIn, netFee);
 
-        (uint amountOut, uint feeAmount, ) = _swap(params, msg.value > netFee, false, msg.sender);
+        (uint amountOut, uint feeAmount, ) = _swap(
+            params, msg.value > netFee, false, msg.sender, balanceBefore
+        );
         IERC20(tokenOut).safeTransfer(feeCollector, feeAmount);
         uint bridgeAmount = amountOut - feeAmount;
 
@@ -103,7 +109,7 @@ contract OMOBaseUniswapV3Aggregator is Ownable {
 
     function _swap(
         IUniswapV3SwapRouter.ExactInputParams memory params,
-        bool nativeIn, bool nativeOut, address logReceiver
+        bool nativeIn, bool nativeOut, address logReceiver, uint256 balanceBefore
     ) internal returns (uint, uint, address) {
         require(params.recipient != address(0), 'OMOAggregator: INVALID_RECIPIENT');
         address receiver = params.recipient;
@@ -113,7 +119,6 @@ contract OMOBaseUniswapV3Aggregator is Ownable {
 
         IERC20(tokenIn).safeApprove(router, params.amountIn);
 
-        uint balanceBefore = IERC20(tokenOut).balanceOf(address(this));
         IUniswapV3SwapRouter(router).exactInput(params);
         uint amountOut = IERC20(tokenOut).balanceOf(address(this)) - balanceBefore;
         uint feeAmount = amountOut * aggregatorFee / FEE_DENOMINATOR;

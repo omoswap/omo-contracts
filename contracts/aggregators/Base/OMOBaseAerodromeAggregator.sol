@@ -49,13 +49,13 @@ contract OMOBaseAerodromeAggregator is Ownable {
         }
         require(amountIn != 0, 'OMOAggregator: ZERO_AMOUNT_IN');
 
+        IERC20 tokenOut = IERC20(routes[routes.length-1].to);
+        uint256 balanceBefore = IERC20(tokenOut).balanceOf(address(this));
         IERC20(routes[0].from).safeTransferFrom(msg.sender, address(this), amountIn);
 
         uint256 amountOutCharged = _swapExactTokensForTokensSupportingFeeOnTransferTokens(
-            amountIn, amountOutMin, routes, false, unwrapETH, receiver
+            amountIn, amountOutMin, routes, balanceBefore, false, unwrapETH, receiver
         );
-
-        IERC20 tokenOut = IERC20(routes[routes.length-1].to);
 
         if (unwrapETH) {
             require(address(tokenOut) == WETH, "OMOAggregator: INVALID_TOKEN_OUT");
@@ -70,13 +70,14 @@ contract OMOBaseAerodromeAggregator is Ownable {
         uint amountIn, uint amountOutMin, IAerodromeRouter.Route[] calldata routes, // args for dex
         uint32 destinationDomain, bytes32 recipient, bytes calldata callData // args for bridge
     ) external payable {
+        address bridgeToken = routes[routes.length-1].to;
+        uint256 balanceBefore = IERC20(bridgeToken).balanceOf(address(this));
         IERC20(routes[0].from).safeTransferFrom(msg.sender, address(this), amountIn);
 
         uint bridgeAmount = _swapExactTokensForTokensSupportingFeeOnTransferTokens(
-            amountIn, amountOutMin, routes, false, false, msg.sender
+            amountIn, amountOutMin, routes, balanceBefore, false, false, msg.sender
         );
 
-        address bridgeToken = routes[routes.length-1].to;
         IERC20(bridgeToken).safeApprove(bridge, bridgeAmount);
         IBridge(bridge).bridgeOut{value: msg.value}(bridgeToken, bridgeAmount, destinationDomain, recipient, callData);
     }
@@ -109,7 +110,7 @@ contract OMOBaseAerodromeAggregator is Ownable {
 
     function _swapExactTokensForTokensSupportingFeeOnTransferTokens(
         uint amountIn, uint amountOutMin,
-        IAerodromeRouter.Route[] calldata routes,
+        IAerodromeRouter.Route[] calldata routes, uint256 balanceBefore,
         bool nativeIn, bool nativeOut, address logReceiver
     ) internal returns (uint) {
         address tokenIn = routes[0].from;
@@ -117,7 +118,6 @@ contract OMOBaseAerodromeAggregator is Ownable {
 
         IERC20(tokenIn).safeApprove(router, amountIn);
 
-        uint balanceBefore = IERC20(tokenOut).balanceOf(address(this));
         IAerodromeRouter(router).swapExactTokensForTokensSupportingFeeOnTransferTokens(
             amountIn, amountOutMin, routes, address(this), block.timestamp+1
         );
@@ -137,10 +137,14 @@ contract OMOBaseAerodromeAggregator is Ownable {
         require(msg.value > netFee, "OMOAggregator: INVALID_MSG_VALUE");
         require(routes[0].from == WETH, "OMOAggregator: INVALID_FROM_TOKEN");
 
+        IERC20 tokenOut = IERC20(routes[routes.length-1].to);
+        uint256 balanceBefore = IERC20(tokenOut).balanceOf(address(this));
         uint256 amountIn = msg.value - netFee;
         IWETH(WETH).deposit{value: amountIn}();
 
-        return _swapExactTokensForTokensSupportingFeeOnTransferTokens(amountIn, amountOutMin, routes, true, false, logReceiver);
+        return _swapExactTokensForTokensSupportingFeeOnTransferTokens(
+            amountIn, amountOutMin, routes, balanceBefore, true, false, logReceiver
+        );
     }
 
     function chargeAndLog(

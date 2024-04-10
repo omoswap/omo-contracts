@@ -50,13 +50,13 @@ contract OMOAvalancheTraderJoeV2Aggregator is Ownable {
         }
         require(amountIn != 0, 'OMOAggregator: ZERO_AMOUNT_IN');
 
+        IERC20 tokenOut = path.tokenPath[path.tokenPath.length-1];
+        uint256 balanceBefore = tokenOut.balanceOf(address(this));
         path.tokenPath[0].safeTransferFrom(msg.sender, address(this), amountIn);
 
         uint amountOutCharged = _swapExactTokensForTokensSupportingFeeOnTransferTokens(
-            amountIn, amountOutMin, path, false, unwrapETH, receiver
+            amountIn, amountOutMin, path, balanceBefore, false, unwrapETH, receiver
         );
-
-        IERC20 tokenOut = path.tokenPath[path.tokenPath.length-1];
 
         if (unwrapETH) {
             require(address(tokenOut) == WETH, "OMOAggregator: INVALID_TOKEN_OUT");
@@ -71,13 +71,14 @@ contract OMOAvalancheTraderJoeV2Aggregator is Ownable {
         uint amountIn, uint amountOutMin, ILBRouter.Path calldata path, // args for dex
         uint32 destinationDomain, bytes32 recipient, bytes calldata callData // args for bridge
     ) external payable {
+        address bridgeToken = address(path.tokenPath[path.tokenPath.length-1]);
+        uint256 balanceBefore = IERC20(bridgeToken).balanceOf(address(this));
         path.tokenPath[0].safeTransferFrom(msg.sender, address(this), amountIn);
 
         uint bridgeAmount = _swapExactTokensForTokensSupportingFeeOnTransferTokens(
-            amountIn, amountOutMin, path, false, false, msg.sender
+            amountIn, amountOutMin, path, balanceBefore, false, false, msg.sender
         );
 
-        address bridgeToken = address(path.tokenPath[path.tokenPath.length-1]);
         IERC20(bridgeToken).safeApprove(bridge, bridgeAmount);
         IBridge(bridge).bridgeOut{value: msg.value}(bridgeToken, bridgeAmount, destinationDomain, recipient, callData);
     }
@@ -110,7 +111,7 @@ contract OMOAvalancheTraderJoeV2Aggregator is Ownable {
 
     function _swapExactTokensForTokensSupportingFeeOnTransferTokens(
         uint amountIn, uint amountOutMin,
-        ILBRouter.Path calldata path,
+        ILBRouter.Path calldata path, uint256 balanceBefore,
         bool nativeIn, bool nativeOut, address logReceiver
     ) internal returns (uint) {
         address tokenIn = address(path.tokenPath[0]);
@@ -118,7 +119,6 @@ contract OMOAvalancheTraderJoeV2Aggregator is Ownable {
 
         IERC20(tokenIn).safeApprove(router, amountIn);
 
-        uint balanceBefore = IERC20(tokenOut).balanceOf(address(this));
         ILBRouter(router).swapExactTokensForTokensSupportingFeeOnTransferTokens(
             amountIn, amountOutMin, path, address(this), block.timestamp+1
         );
@@ -138,10 +138,14 @@ contract OMOAvalancheTraderJoeV2Aggregator is Ownable {
         require(msg.value > netFee, "OMOAggregator: INVALID_MSG_VALUE");
         require(address(path.tokenPath[0]) == WETH, "OMOAggregator: INVALID_FROM_TOKEN");
 
+        IERC20 tokenOut = path.tokenPath[path.tokenPath.length-1];
+        uint256 balanceBefore = IERC20(tokenOut).balanceOf(address(this));
         uint256 amountIn = msg.value - netFee;
         IWETH(WETH).deposit{value: amountIn}();
 
-        return _swapExactTokensForTokensSupportingFeeOnTransferTokens(amountIn, amountOutMin, path, true, false, logReceiver);
+        return _swapExactTokensForTokensSupportingFeeOnTransferTokens(
+            amountIn, amountOutMin, path, balanceBefore, true, false, logReceiver
+        );
     }
 
     function chargeAndLog(

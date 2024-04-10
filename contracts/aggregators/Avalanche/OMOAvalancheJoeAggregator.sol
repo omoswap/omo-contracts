@@ -71,8 +71,8 @@ contract OMOAvalancheJoeAggregator is Ownable {
     }
 
     function swapExactTokensForTokensSupportingFeeOnTransferTokensCrossChain(
-        uint amountIn, uint amountOutMin, address[] calldata path,         // args for dex
-        uint32 destinationDomain, bytes32 recipient, bytes memory callData // args for bridge
+        uint amountIn, uint amountOutMin, address[] calldata path,           // args for dex
+        uint32 destinationDomain, bytes32 recipient, bytes calldata callData // args for bridge
     ) external payable {
         uint amountOut = _swapExactTokensForTokensSupportingFeeOnTransferTokens(amountIn, amountOutMin, path);
         uint feeAmount = amountOut * aggregatorFee / FEE_DENOMINATOR;
@@ -117,8 +117,8 @@ contract OMOAvalancheJoeAggregator is Ownable {
     }
 
     function swapExactETHForTokensSupportingFeeOnTransferTokensCrossChain(
-        uint amountOutMin, address[] calldata path, uint netFee,            // args for dex
-        uint32 destinationDomain, bytes32 recipient, bytes memory callData  // args for bridge
+        uint amountOutMin, address[] calldata path, uint netFee,             // args for dex
+        uint32 destinationDomain, bytes32 recipient, bytes calldata callData // args for bridge
     ) external payable {
         uint amountOut = _swapExactETHForTokensSupportingFeeOnTransferTokens(amountOutMin, path, netFee);
         uint feeAmount = amountOut * aggregatorFee / FEE_DENOMINATOR;
