@@ -49,6 +49,9 @@ const config: HardhatUserConfig = {
     [chain.BNBChain]: {
       url: vars.get("BNBCHAIN_RPC_URL"),
     },
+    [chain.Celo]: {
+      url: vars.get("CELO_RPC_URL"),
+    },
     [chain.EthereumSepolia]: {
       url: vars.get("ETHEREUM_SEPOLIA_RPC_URL"),
     },
