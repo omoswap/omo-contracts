@@ -3,6 +3,7 @@ import "@nomiclabs/hardhat-ethers";
 import { HardhatUserConfig } from "hardhat/config";
 import { existsSync, readFileSync } from 'fs';
 import { chain, chainID } from "./constants";
+import { bnbChain } from "./typechain-types/contracts/aggregators";
 const { vars } = require("hardhat/config");
 
 const privKeyFile = '.private_key'
@@ -77,6 +78,8 @@ const config: HardhatUserConfig = {
       optimisticEthereum: vars.get("OPTIMISM_API_KEY"),
       Base: vars.get("BASE_API_KEY"),
       polygon: vars.get("POLYGON_API_KEY"),
+      bsc: vars.get("BNBCHAIN_API_KEY"),
+      Celo: vars.get("CELO_API_KEY"),
     },
     customChains: [
       {
@@ -86,7 +89,15 @@ const config: HardhatUserConfig = {
           apiURL: "https://api.basescan.org/api",
           browserURL: "https://basescan.org"
         },
-      }
+      },
+      {
+        network: chain.Celo,
+        chainId: chainID.Celo,
+        urls: {
+          apiURL: "https://api.celoscan.io/api",
+          browserURL: "https://celoscan.io",
+        },
+      },
     ]
   },
 
