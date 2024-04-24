@@ -97,6 +97,11 @@ contract OMOScrollSyncSwapAggregator is Ownable {
         ISyncSwapPool pool = ISyncSwapPool(lastStep.pool);
         address tokenIn = path.tokenIn;
         address tokenOut = lastTokenIn == pool.token0() ? pool.token1() : pool.token0();
+        if (tokenOut == address(0) && withdrawMode == 2) {
+            tokenOut = WETH;
+        } else if (tokenOut == WETH && withdrawMode == 1) {
+            tokenOut = address(0);
+        }
 
         lastStep.data = abi.encode(lastTokenIn, address(this), withdrawMode);
 
