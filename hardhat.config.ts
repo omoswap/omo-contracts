@@ -53,6 +53,9 @@ const config: HardhatUserConfig = {
     [chain.Celo]: {
       url: vars.get("CELO_RPC_URL"),
     },
+    [chain.Scroll]: {
+      url: vars.get("SCROLL_RPC_URL"),
+    },
     [chain.EthereumSepolia]: {
       url: vars.get("ETHEREUM_SEPOLIA_RPC_URL"),
     },

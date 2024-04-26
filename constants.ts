@@ -8,6 +8,7 @@ export enum chain {
     Base = "Base",
     BNBChain = "BNBChain",
     Celo = "Celo",
+    Scroll = "Scroll",
 
     // TestNets
     EthereumSepolia = 'EthereumSepolia',
@@ -16,7 +17,8 @@ export enum chain {
     OptimismSepolia = 'OptimismSepolia',
     BaseSepolia = 'BaseSepolia',
     BNBChainTestnet = 'BNBChainTestnet',
-    CeloTestnet = "CeloTestnet"
+    CeloTestnet = "CeloTestnet",
+    ScrollTestnet = "ScrollTestnet",
 }
 
 export enum chainID {
@@ -31,6 +33,7 @@ export enum chainID {
     Arbitrum = 42161,
     Celo = 42220,
     Avalanche = 43114,
+    Scroll = 534352,
 
     // TestNets
     BNBChainTestnet = 97,
@@ -40,6 +43,7 @@ export enum chainID {
     OptimismSepolia = 11155420,
     BaseSepolia = 84532,
     CeloTestnet = 44787,
+    ScrollTestnet = 534351,
 }
 
 const mainnets = new Set<string>([
@@ -51,6 +55,7 @@ const mainnets = new Set<string>([
     chain.Base,
     chain.BNBChain,
     chain.Celo,
+    chain.Scroll,
 ]);
 
 export function isDefinedNetwork(net: string) {
