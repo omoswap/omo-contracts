@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 
 import "../../access/Ownable.sol";
 import "../../interfaces/IBridge.sol";
+import "../../assets/interfaces/IWETH.sol";
 import "./interfaces/IAmbientDex.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -58,6 +59,10 @@ contract OMOScrollAmbientAggregator is Ownable {
             _sendETH(recipient, amountOut - feeAmount);
             _sendETH(feeCollector, feeAmount);
         } else {
+            if (tokenOut == WETH) {
+                IWETH(WETH).deposit{value: amountOut}();
+            }
+
             IERC20(tokenOut).safeTransfer(recipient, amountOut - feeAmount);
             IERC20(tokenOut).safeTransfer(feeCollector, feeAmount);
         }
@@ -97,6 +102,9 @@ contract OMOScrollAmbientAggregator is Ownable {
         } else {
             require(token != address(0), 'OMOAggregator: INVALID_TOKEN_IN');
             IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
+            if (token == WETH) {
+                IWETH(WETH).withdraw(amount);
+            }
         }
     }
 
@@ -112,7 +120,7 @@ contract OMOScrollAmbientAggregator is Ownable {
             uint256 balanceBefore = getTokenBalance(tokenOut);
             _pull(tokenIn, amountIn, netFee);
 
-            if (tokenIn == address(0)) {
+            if (tokenIn == address(0) || tokenIn == WETH) {
                 IAmbientDex(dex).userCmd{value: amountIn}(callpath, cmd);
             } else {
                 IERC20(tokenIn).safeApprove(dex, amountIn);
@@ -138,7 +146,7 @@ contract OMOScrollAmbientAggregator is Ownable {
     }
 
     function getTokenBalance(address token) internal view returns (uint256) {
-        if (token == address(0)) {
+        if (token == address(0) || token == WETH) {
             return address(this).balance;
         }
 
