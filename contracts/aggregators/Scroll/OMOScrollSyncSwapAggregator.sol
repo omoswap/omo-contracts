@@ -113,7 +113,7 @@ contract OMOScrollSyncSwapAggregator is Ownable {
         require(amount > 0, 'OMOAggregator: INSUFFICIENT_INPUT_AMOUNT');
 
         if (msg.value > netFee) {
-            require(token == address(0), 'OMOAggregator: INVALID_TOKEN_IN');
+            require(token == WETH, 'OMOAggregator: INVALID_TOKEN_IN');
             require(msg.value - netFee >= amount, "OMOAggregator: INSUFFICIENT_INPUT_AMOUNT");
         } else {
             require(token != address(0), 'OMOAggregator: INVALID_TOKEN_IN');
@@ -138,7 +138,7 @@ contract OMOScrollSyncSwapAggregator is Ownable {
             ISyncSwapRouter.SwapPath[] memory paths = new ISyncSwapRouter.SwapPath[](1);
             paths[0] = path;
 
-            if (tokenIn == address(0)) {
+            if (tokenIn == WETH && msg.value > netFee) {
                 ISyncSwapRouter(router).swap{value: amountIn}(paths, amountOutMin, deadline);
             } else {
                 IERC20(tokenIn).safeApprove(router, amountIn);
