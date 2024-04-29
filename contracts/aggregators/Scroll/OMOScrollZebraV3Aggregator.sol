@@ -121,6 +121,10 @@ contract OMOScrollZebraV3Aggregator is Ownable {
 
         IERC20(tokenIn).safeApprove(router, params.amountIn);
 
+        if (params.deadline == 0) {
+            params.deadline = block.timestamp+1;
+        }
+
         IZebraV3SwapRouter(router).exactInput(params);
         uint amountOut = IERC20(tokenOut).balanceOf(address(this)) - balanceBefore;
         uint feeAmount = amountOut * aggregatorFee / FEE_DENOMINATOR;
