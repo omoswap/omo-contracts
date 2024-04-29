@@ -83,6 +83,7 @@ const config: HardhatUserConfig = {
       polygon: vars.get("POLYGON_API_KEY"),
       bsc: vars.get("BNBCHAIN_API_KEY"),
       Celo: vars.get("CELO_API_KEY"),
+      Scroll: vars.get("SCROLL_API_KEY"),
     },
     customChains: [
       {
@@ -99,6 +100,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: "https://api.celoscan.io/api",
           browserURL: "https://celoscan.io",
+        },
+      },
+      {
+        network: chain.Scroll,
+        chainId: chainID.Scroll,
+        urls: {
+          apiURL: "https://api.scrollscan.com/api",
+          browserURL: "https://scrollscan.com",
         },
       },
     ]

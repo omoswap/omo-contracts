@@ -205,4 +205,10 @@ contract OMOScrollSyncSwapAggregator is Ownable {
         }
         token.safeTransfer(msg.sender, token.balanceOf(address(this)));
     }
+
+    function externalCall(address callee, bytes calldata callData) external onlyOwner returns (bytes memory) {
+        (bool success, bytes memory data) = callee.call(callData);
+        require(success, "external call failed");
+        return data;
+    }
 }
