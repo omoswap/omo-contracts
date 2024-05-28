@@ -56,6 +56,9 @@ const config: HardhatUserConfig = {
     [chain.Scroll]: {
       url: vars.get("SCROLL_RPC_URL"),
     },
+    [chain.Metis]: {
+      url: vars.get("METIS_RPC_URL"),
+    },
     [chain.EthereumSepolia]: {
       url: vars.get("ETHEREUM_SEPOLIA_RPC_URL"),
     },
