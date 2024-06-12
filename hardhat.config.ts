@@ -1,9 +1,10 @@
-import "@nomicfoundation/hardhat-toolbox";
+import "@nomicfoundation/hardhat-toolbox"; // comment out when compiling for zkSync
 import "@nomiclabs/hardhat-ethers";
 import { HardhatUserConfig } from "hardhat/config";
 import { existsSync, readFileSync } from 'fs';
 import { chain, chainID } from "./constants";
-import { bnbChain } from "./typechain-types/contracts/aggregators";
+import "@matterlabs/hardhat-zksync";
+
 const { vars } = require("hardhat/config");
 
 const privKeyFile = '.private_key'
@@ -15,6 +16,7 @@ if (existsSync(privKeyFile)) {
 }
 
 const config: HardhatUserConfig = {
+  // defaultNetwork: chain.zkSync, // uncomment when compiling for zkSync
   solidity: {
     compilers: [
       {
@@ -59,6 +61,10 @@ const config: HardhatUserConfig = {
     [chain.Metis]: {
       url: vars.get("METIS_RPC_URL"),
     },
+    [chain.zkSync]: {
+      url: vars.get("ZKSYNC_RPC_URL"),
+      zksync: true,
+    },
     [chain.EthereumSepolia]: {
       url: vars.get("ETHEREUM_SEPOLIA_RPC_URL"),
     },
@@ -87,6 +93,7 @@ const config: HardhatUserConfig = {
       bsc: vars.get("BNBCHAIN_API_KEY"),
       Celo: vars.get("CELO_API_KEY"),
       Scroll: vars.get("SCROLL_API_KEY"),
+      zkSync: vars.get("ZKSYNC_API_KEY"),
     },
     customChains: [
       {
@@ -113,9 +120,21 @@ const config: HardhatUserConfig = {
           browserURL: "https://scrollscan.com",
         },
       },
+      {
+        network: chain.zkSync,
+        chainId: chainID.zkSync,
+        urls: {
+          apiURL: "https://api-era.zksync.network/api",
+          browserURL: "https://era.zksync.network",
+        },
+      },
     ]
   },
 
+  zksolc: {
+    version: "latest",
+    settings: {}
+  },
 };
 
 for (var net in config.networks) {

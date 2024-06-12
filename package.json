@@ -5,6 +5,7 @@
   },
   "devDependencies": {
     "@defi-wonderland/smock": "^2.3.4",
+    "@matterlabs/hardhat-zksync": "^1.0.0",
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.4",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.8",
     "@nomicfoundation/hardhat-toolbox": "^2.0.0",
@@ -15,7 +16,7 @@
     "@types/mocha": "^10.0.1",
     "bignumber.js": "^9.1.2",
     "chai": "^4.3.6",
-    "hardhat": "^2.19.4",
+    "hardhat": "^2.22.5",
     "hardhat-gas-reporter": "^1.0.9",
     "solidity-coverage": "^0.8.5"
   },
