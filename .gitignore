@@ -8,7 +8,9 @@ myproject
 # Project specific
 .private_key
 cache
+cache-zk
 artifacts
+artifacts-zk
 .env
 coverage
 coverage.json
