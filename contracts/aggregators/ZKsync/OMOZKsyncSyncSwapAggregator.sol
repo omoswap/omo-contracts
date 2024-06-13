@@ -9,7 +9,7 @@ import "../interfaces/ISyncSwapRouter.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-contract OMOScrollSyncSwapAggregator is Ownable {
+contract OMOZKsyncSyncSwapAggregator is Ownable {
     using SafeERC20 for IERC20;
 
     event LOG_AGG_SWAP (
@@ -22,8 +22,8 @@ contract OMOScrollSyncSwapAggregator is Ownable {
         uint256 fee
     );
 
-    address public WETH = 0x5300000000000000000000000000000000000004;
-    address public router = 0x80e38291e06339d10AAB483C65695D004dBD5C69;
+    address public WETH = 0x5AEa5775959fBC2557Cc8789bC1bf90A239D9a91;
+    address public router = 0x2da10A1e27bF85cEdD8FFb1AbBe97e53391C0295;
     address public bridge = 0x0000000000000000000000000000000000000000;
     address public feeCollector;
 
