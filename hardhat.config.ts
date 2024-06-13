@@ -3,7 +3,6 @@ import "@nomiclabs/hardhat-ethers";
 import { HardhatUserConfig } from "hardhat/config";
 import { existsSync, readFileSync } from 'fs';
 import { chain, chainID } from "./constants";
-import "@matterlabs/hardhat-zksync";
 
 const { vars } = require("hardhat/config");
 
@@ -63,8 +62,9 @@ const config: HardhatUserConfig = {
     },
     [chain.zkSync]: {
       url: vars.get("ZKSYNC_RPC_URL"),
-      zksync: true,
-      ethNetwork: "mainnet",
+      // zksync: true,
+      // ethNetwork: chain.Ethereum,
+      // verifyURL: "https://zksync2-mainnet-explorer.zksync.io/contract_verification",
     },
     [chain.EthereumSepolia]: {
       url: vars.get("ETHEREUM_SEPOLIA_RPC_URL"),
@@ -132,10 +132,10 @@ const config: HardhatUserConfig = {
     ]
   },
 
-  zksolc: {
-    version: "latest",
-    settings: {}
-  },
+  // zksolc: {
+  //   version: "latest",
+  //   settings: {}
+  // },
 };
 
 for (var net in config.networks) {
