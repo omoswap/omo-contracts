@@ -64,6 +64,7 @@ const config: HardhatUserConfig = {
     [chain.zkSync]: {
       url: vars.get("ZKSYNC_RPC_URL"),
       zksync: true,
+      ethNetwork: "mainnet",
     },
     [chain.EthereumSepolia]: {
       url: vars.get("ETHEREUM_SEPOLIA_RPC_URL"),
