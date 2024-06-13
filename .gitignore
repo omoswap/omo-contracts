@@ -21,6 +21,7 @@ generate_abi.sh
 build
 note.md
 readPrivKey.ts
+deployments-zk
 
 # VS Code workspace config
 workspace.code-workspace
