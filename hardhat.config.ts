@@ -66,6 +66,9 @@ const config: HardhatUserConfig = {
       // ethNetwork: chain.Ethereum,
       // verifyURL: "https://zksync2-mainnet-explorer.zksync.io/contract_verification",
     },
+    [chain.Blast]: {
+      url: vars.get("BLAST_RPC_URL"),
+    },
     [chain.EthereumSepolia]: {
       url: vars.get("ETHEREUM_SEPOLIA_RPC_URL"),
     },
@@ -95,6 +98,7 @@ const config: HardhatUserConfig = {
       Celo: vars.get("CELO_API_KEY"),
       Scroll: vars.get("SCROLL_API_KEY"),
       zkSync: vars.get("ZKSYNC_API_KEY"),
+      Blast: vars.get("BLAST_API_KEY"),
     },
     customChains: [
       {
@@ -127,6 +131,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: "https://api-era.zksync.network/api",
           browserURL: "https://era.zksync.network",
+        },
+      },
+      {
+        network: chain.Blast,
+        chainId: chainID.Blast,
+        urls: {
+          apiURL: "https://api.blastscan.io/api",
+          browserURL: "https://blastscan.io",
         },
       },
     ]
