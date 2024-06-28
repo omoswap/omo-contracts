@@ -8,7 +8,7 @@ import "../../assets/interfaces/IWETH.sol";
 import "../interfaces/IAmbientDex.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-contract OMOScrollAmbientAggregator is Ownable {
+contract OMOBlastAmbientAggregator is Ownable {
     using SafeERC20 for IERC20;
 
     event LOG_AGG_SWAP (
@@ -21,8 +21,8 @@ contract OMOScrollAmbientAggregator is Ownable {
         uint256 fee
     );
 
-    address public WETH = 0x5300000000000000000000000000000000000004;
-    address public dex = 0xaaaaAAAACB71BF2C8CaE522EA5fa455571A74106;
+    address public WETH = 0x4300000000000000000000000000000000000004;
+    address public dex = 0xaAaaaAAAFfe404EE9433EEf0094b6382D81fb958;
     address public bridge = 0x0000000000000000000000000000000000000000;
     address public feeCollector;
 
@@ -189,7 +189,9 @@ contract OMOScrollAmbientAggregator is Ownable {
         token.safeTransfer(msg.sender, token.balanceOf(address(this)));
     }
 
-    function externalCall(address callee, bytes calldata callData) external onlyOwner returns (bytes memory) {
+    function externalCall(
+        address callee, bytes calldata callData
+    ) external onlyOwner returns (bytes memory) {
         (bool success, bytes memory data) = callee.call(callData);
         require(success, "external call failed");
         return data;
