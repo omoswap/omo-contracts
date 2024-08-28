@@ -102,7 +102,7 @@ const config: HardhatUserConfig = {
       Scroll: vars.get("SCROLL_API_KEY"),
       zkSync: vars.get("ZKSYNC_API_KEY"),
       Blast: vars.get("BLAST_API_KEY"),
-      mantle: vars.get("MANTLE_API_KEY"),
+      Mantle: vars.get("MANTLE_API_KEY"),
     },
     customChains: [
       {
