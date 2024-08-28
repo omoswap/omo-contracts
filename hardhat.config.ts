@@ -69,6 +69,9 @@ const config: HardhatUserConfig = {
     [chain.Blast]: {
       url: vars.get("BLAST_RPC_URL"),
     },
+    [chain.Mantle]: {
+      url: vars.get("MANTLE_RPC_URL"),
+    },
     [chain.EthereumSepolia]: {
       url: vars.get("ETHEREUM_SEPOLIA_RPC_URL"),
     },
@@ -99,6 +102,7 @@ const config: HardhatUserConfig = {
       Scroll: vars.get("SCROLL_API_KEY"),
       zkSync: vars.get("ZKSYNC_API_KEY"),
       Blast: vars.get("BLAST_API_KEY"),
+      mantle: vars.get("MANTLE_API_KEY"),
     },
     customChains: [
       {
@@ -139,6 +143,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: "https://api.blastscan.io/api",
           browserURL: "https://blastscan.io",
+        },
+      },
+      {
+        network: chain.Mantle,
+        chainId: chainID.Mantle,
+        urls: {
+          apiURL: "https://api.mantlescan.xyz/api",
+          browserURL: "https://mantlescan.xyz",
         },
       },
     ]

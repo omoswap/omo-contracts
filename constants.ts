@@ -12,6 +12,7 @@ export enum chain {
     Metis = "Metis",
     zkSync = "zkSync",
     Blast = "Blast",
+    Mantle = "Mantle",
 
     // TestNets
     EthereumSepolia = 'EthereumSepolia',
@@ -33,6 +34,7 @@ export enum chainID {
     Polygon = 137,
     Fantom = 250,
     zkSync = 324,
+    Mantle = 5000,
     Base = 8453,
     Arbitrum = 42161,
     Celo = 42220,
@@ -65,6 +67,7 @@ const mainnets = new Set<string>([
     chain.Metis,
     chain.zkSync,
     chain.Blast,
+    chain.Mantle,
 ]);
 
 export function isDefinedNetwork(net: string) {
