@@ -72,6 +72,9 @@ const config: HardhatUserConfig = {
     [chain.Mantle]: {
       url: vars.get("MANTLE_RPC_URL"),
     },
+    [chain.Linea]: {
+      url: vars.get("LINEA_RPC_URL"),
+    },
     [chain.EthereumSepolia]: {
       url: vars.get("ETHEREUM_SEPOLIA_RPC_URL"),
     },
@@ -103,6 +106,7 @@ const config: HardhatUserConfig = {
       zkSync: vars.get("ZKSYNC_API_KEY"),
       Blast: vars.get("BLAST_API_KEY"),
       Mantle: vars.get("MANTLE_API_KEY"),
+      Linea: vars.get("LINEA_API_KEY"),
     },
     customChains: [
       {
@@ -151,6 +155,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: "https://api.mantlescan.xyz/api",
           browserURL: "https://mantlescan.xyz",
+        },
+      },
+      {
+        network: chain.Linea,
+        chainId: chainID.Linea,
+        urls: {
+          apiURL: "https://api.lineascan.build/api",
+          browserURL: "https://lineascan.build",
         },
       },
     ]
